@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /parties/{document=**} {
+      allow read;
+    }
+
+    match /users/{user_id}/chat_sessions/{session_id} {
+      allow read, write: if request.auth != null && request.auth.uid == user_id;
+    }
+
+    match /chat_sessions/{session_id} {
+      allow read: if (request.auth != null && resource.data.user_id == request.auth.uid) || resource.data.is_public == true;
+
+      allow list: if request.auth != null && (
+        request.query.filters.size() >= 1 &&
+        'user_id' in request.query.filters.toMap() &&
+        request.query.filters[0] == ['user_id', '==', request.auth.uid]
+      );
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['user_id'])
+        && request.resource.data.user_id is string
+        && request.resource.data.user_id == request.auth.uid;
+
+      allow update: if request.auth != null
+        && request.resource.data.keys().hasAll(['user_id'])
+        && request.resource.data.user_id is string
+        && resource.data.user_id == request.auth.uid
+        && request.resource.data.user_id == resource.data.user_id;
+
+      allow delete: if request.auth != null
+        && resource.data.user_id == request.auth.uid;
+    }
+
+  	match /chat_sessions/{session_id}/messages/{message_id} {
+    	allow read, update, write, list: if true;
+    }
+  }
+}

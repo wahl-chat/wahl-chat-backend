@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: 2025 2025 wahl.chat
+#
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+
+name: Trigger auto deployment for dev-wahl-chat-api
+
+# When this action will be executed
+on:
+  # [Temporarily disabled for cost saving] Automatically trigger it when detected changes in repo
+  # push:
+  #   branches:
+  #     [ develop ]
+  #   paths:
+  #   - '**'
+  #   - '.github/workflows/dev-wahl-chat-api-AutoDeployTrigger-59105f3d-c111-4390-8b9d-b650fbfd234b.yml'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Create the firebase admin sdk json
+        uses: jsdaniell/create-json@v1.2.3
+        with:
+          name: "wahl-chat-dev-firebase-adminsdk.json"
+          json: ${{ secrets.DEV_FIREBASE_ADMIN_SDK_JSON }}
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.DEVWAHLCHATAPI_AZURE_CREDENTIALS }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          registryUrl: cab7d36560b1acr.azurecr.io
+          registryUsername: ${{ secrets.DEVWAHLCHATAPI_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.DEVWAHLCHATAPI_REGISTRY_PASSWORD }}
+          containerAppName: dev-wahl-chat-api
+          resourceGroup: wahl-chat
+          imageToBuild: cab7d36560b1acr.azurecr.io/dev-wahl-chat-api:${{ github.sha }}
