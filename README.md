@@ -19,9 +19,9 @@ The aim of wahl.chat is to enable users to engage in a contemporary way with the
 This project is **source-available** under the **PolyForm Noncommercial 1.0.0** license.
 - Free for **non-commercial** use (see LICENSE for permitted purposes)
 - Share the license text and any `Required Notice:` lines when distributing
-- Please contact us at info@wahl.chat to
-a. inform us about your use case
-b. get access to assets required for a reference to wahl.chat on your project page
+- Please contact us at info@wahl.chat to  
+  a. Inform us about your use case  
+  b. Get access to assets required for a reference to wahl.chat on your project page  
 - Do not use the wahl.chat name or logo in your project without our permission
 
 ## Localization
@@ -47,7 +47,7 @@ To adapt it for use in other countries, you will need to adjust the prompts and 
 Create a .env file with the environment variables as defined in `.env.example`.
 Regarding the Langchain API key you have 3 Options (it is needed for langchain tracing on smith.langchain.com)
 1. Set up your own project and API key at [smith.langchain.com](https://smith.langchain.com)
-3. Set `LANGCHAIN_TRACING_V2=false` to deactivate tracing.
+2. Set `LANGCHAIN_TRACING_V2=false` to deactivate tracing.
 
 ### Provide the Firebase Admin SDK Credentials
 Add a file named `wahl-chat-dev-firebase-adminsdk.json` to the root directory of this repository. This file can be generated at [https://console.firebase.google.com/u/0/project/wahl-chat/settings/serviceaccounts/adminsdk](https://console.firebase.google.com/u/0/project/wahl-chat/settings/serviceaccounts/adminsdk)
