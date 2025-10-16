@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2025 2025 wahl.chat
 SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 -->
 
-# Wahl.chat backend
+# wahl.chat backend
 Backend of the leading political information chatbot for the German federal elections 2025.
 
 ## About wahl.chat
