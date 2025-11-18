@@ -4,9 +4,9 @@
 
 from datetime import datetime
 import os
-import time
 import tempfile
-from uuid import uuid4
+import time
+import uuid
 
 from firebase_functions.params import StringParam
 from firebase_functions.options import SupportedRegion, MemoryOption
@@ -17,24 +17,42 @@ import google.cloud.firestore
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
-from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from pinecone import Pinecone, ServerlessSpec
+from qdrant_client import QdrantClient
+from qdrant_client.models import (
+    Distance,
+    VectorParams,
+    PointIdsList,
+    PayloadSchemaType,
+    PointStruct,
+)
 
 from models import PartySource  # type: ignore
 
 
 ENV = StringParam("ENV")  # "dev" or "prod"
 OPENAI_API_KEY = StringParam("OPENAI_API_KEY")
-PINECONE_API_KEY = StringParam("PINECONE_API_KEY")
+QDRANT_URL = StringParam("QDRANT_URL")
+QDRANT_API_KEY = StringParam("QDRANT_API_KEY")
 
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_SIZE = 3072  # Embedding sizes for the OpenAI models: https://platform.openai.com/docs/guides/embeddings#how-to-get-embeddings
 
-ALL_PARTIES_INDEX = "all-parties-index"
+# Get environment from OS environment variable or Firebase project ID for region selection
+# This is evaluated at module load time, before StringParam values are available
+_env_from_os = os.getenv("ENV", "dev")
+_project_id = os.getenv("GCLOUD_PROJECT", os.getenv("GCP_PROJECT", ""))
 
+# Get environment suffix for collection naming
+env_suffix = f"_{ENV.value}" if ENV.value in ["prod", "dev"] else "_dev"
+ALL_PARTIES_COLLECTION = f"all_parties{env_suffix}"
+
+# Set region based on environment at module load time
+# For prod (project: wahl-chat), use US_EAST1; for dev (project: wahl-chat-dev), use EUROPE_WEST1
+# Check both ENV variable and project ID to determine region
+_is_prod = _env_from_os == "prod" or _project_id == "wahl-chat"
 STORAGE_TRIGGER_FN_REGION = (
-    SupportedRegion.EUROPE_WEST1 if ENV.value == "dev" else SupportedRegion.US_EAST1
+    SupportedRegion.US_EAST1 if _is_prod else SupportedRegion.EUROPE_WEST1
 )
 
 initialize_app()
@@ -107,37 +125,215 @@ def split_pdf(file_path: str):
     return splits
 
 
-def create_index_if_not_exists(pc: Pinecone, index_name: str, embedding_size: int):
-    existing_indexes = [index_info["name"] for index_info in pc.list_indexes()]
-    if index_name not in existing_indexes:
-        logger.info(f"Creating Pinecone index {index_name}")
-        pc.create_index(
-            name=index_name,
-            dimension=embedding_size,
-            metric="cosine",
-            spec=ServerlessSpec(cloud="aws", region="eu-west-1"),
+def create_collection_if_not_exists(
+    qdrant_client: QdrantClient, collection_name: str, embedding_size: int
+):
+    existing_collections = [
+        col.name for col in qdrant_client.get_collections().collections
+    ]
+    if collection_name not in existing_collections:
+        logger.info(f"Creating Qdrant collection {collection_name}")
+        qdrant_client.create_collection(
+            collection_name=collection_name,
+            vectors_config={
+                "dense": VectorParams(size=embedding_size, distance=Distance.COSINE)
+            },
         )
-        while not pc.describe_index(index_name).status["ready"]:
+        while not qdrant_client.collection_exists(collection_name=f"{collection_name}"):
             time.sleep(1)
-        logger.info(f"Index {index_name} created")
+        logger.info(f"Collection {collection_name} created")
+
+    # Always ensure payload indexes exist (even for existing collections)
+    # Create payload index for 'namespace' to improve query performance (following migration pattern)
+    try:
+        qdrant_client.create_payload_index(
+            collection_name=collection_name,
+            field_name="namespace",
+            field_schema=PayloadSchemaType.KEYWORD,
+        )
+        logger.info(f"Created namespace index for collection {collection_name}")
+    except Exception as e:
+        # Index might already exist, which is fine
+        logger.debug(
+            f"Namespace index for {collection_name} already exists or could not be created: {str(e)}"
+        )
+
+    # Create payload index for 'source_document' to improve deletion performance
+    try:
+        qdrant_client.create_payload_index(
+            collection_name=collection_name,
+            field_name="source_document",
+            field_schema=PayloadSchemaType.KEYWORD,
+        )
+        logger.info(f"Created source_document index for collection {collection_name}")
+    except Exception as e:
+        # Index might already exist, which is fine
+        logger.debug(
+            f"Source_document index for {collection_name} already exists or could not be created: {str(e)}"
+        )
 
 
-def add_to_index(splits: list[Document], index_name: str, namespace: str):
+def add_to_collection(splits: list[Document], collection_name: str, namespace: str):
     logger.info(
-        f"Adding {len(splits)} splits to index {index_name} in namespace {namespace}"
+        f"Adding {len(splits)} splits to collection {collection_name} with namespace {namespace}"
     )
 
     # TODO: consider switching to NV-Embed-v2 or a similar high-performing embedding model (https://huggingface.co/spaces/mteb/leaderboard) potentially by leveraging (https://github.com/michaelfeil/infinity)
-    embed = OpenAIEmbeddings(model=EMBEDDING_MODEL, openai_api_key=OPENAI_API_KEY.value)
+    embed = OpenAIEmbeddings(model=EMBEDDING_MODEL, api_key=OPENAI_API_KEY.value)
 
-    pc = Pinecone(pinecone_api_key=PINECONE_API_KEY.value, embedding=embed)
+    qdrant_client = QdrantClient(
+        url=QDRANT_URL.value,
+        api_key=QDRANT_API_KEY.value if QDRANT_API_KEY.value else None,
+        timeout=120,  # Increase timeout to 120 seconds
+    )
 
-    create_index_if_not_exists(pc, index_name, EMBEDDING_SIZE)
+    create_collection_if_not_exists(qdrant_client, collection_name, EMBEDDING_SIZE)
 
-    index = pc.Index(index_name)
-    vector_store = PineconeVectorStore(index=index, embedding=embed)
-    vector_store.add_documents(splits, namespace=namespace)
-    logger.info(f"Added splits to index {index_name} in namespace {namespace}")
+    # Verify all documents have IDs and namespace - these should be set before calling this function
+    for split in splits:
+        if not hasattr(split, "id") or not split.id:
+            raise ValueError(f"Document missing ID: {split.page_content[:50]}...")
+        if "namespace" not in split.metadata:
+            raise ValueError(f"Document missing namespace in metadata: {split.id}")
+
+    # Process documents in batches to avoid timeout
+    batch_size = 50  # Adjust based on your needs
+    total_batches = (len(splits) + batch_size - 1) // batch_size
+
+    logger.info(
+        f"Starting batch upload: {len(splits)} documents in {total_batches} batches of {batch_size}"
+    )
+
+    for i in range(0, len(splits), batch_size):
+        batch = splits[i : i + batch_size]
+        batch_num = (i // batch_size) + 1
+
+        logger.info(
+            f"Processing batch {batch_num}/{total_batches} with {len(batch)} documents"
+        )
+
+        # Log first document metadata for debugging
+        if batch:
+            sample_doc = batch[0]
+            logger.info(
+                f"Sample document ID: {sample_doc.id if hasattr(sample_doc, 'id') else 'NO_ID'}"
+            )
+            logger.info(f"Sample metadata keys: {list(sample_doc.metadata.keys())}")
+            logger.info(
+                f"Sample namespace: {sample_doc.metadata.get('namespace', 'MISSING')}"
+            )
+            logger.info(f"Sample content length: {len(sample_doc.page_content)}")
+
+        try:
+            # Use direct Qdrant client with explicit IDs instead of LangChain wrapper
+            # This ensures our custom UUIDs are preserved
+
+            # Generate embeddings for the batch
+            texts = [doc.page_content for doc in batch]
+            embeddings = embed.embed_documents(texts)
+
+            # Create points with explicit IDs and metadata
+            points = []
+            for doc, embedding in zip(batch, embeddings):
+                # Prepare payload with content and all metadata
+                payload = {
+                    "text": doc.page_content,  # Content stored in 'text' field
+                    **doc.metadata,  # All metadata fields
+                }
+
+                # Ensure ID is a string (should always be set by caller)
+                point_id = (
+                    str(doc.id)
+                    if doc.id
+                    else str(uuid.uuid5(uuid.NAMESPACE_DNS, doc.page_content))
+                )
+
+                point = PointStruct(
+                    id=point_id,  # Use our custom UUID
+                    vector={"dense": embedding},  # Named vector
+                    payload=payload,
+                )
+                points.append(point)
+
+            # Upload points to Qdrant
+            qdrant_client.upsert(
+                collection_name=collection_name,
+                points=points,
+                wait=True,  # Wait for operation to complete
+            )
+
+            logger.info(f"Successfully added batch {batch_num}/{total_batches}")
+            logger.info(
+                f"Uploaded {len(points)} points with IDs: {[p.id[:8] + '...' for p in points[:3]]}"
+            )
+        except Exception as e:
+            logger.error(f"Error adding batch {batch_num}/{total_batches}: {str(e)}")
+            # Retry with smaller batch size
+            if len(batch) > 1:
+                logger.info(f"Retrying batch {batch_num} with individual documents")
+                for j, doc in enumerate(batch):
+                    try:
+                        # Retry individual document with direct client
+                        text = doc.page_content
+                        embedding = embed.embed_documents([text])[0]
+
+                        payload = {"text": text, **doc.metadata}
+
+                        # Ensure ID is a string
+                        point_id = (
+                            str(doc.id)
+                            if doc.id
+                            else str(uuid.uuid5(uuid.NAMESPACE_DNS, text))
+                        )
+
+                        point = PointStruct(
+                            id=point_id, vector={"dense": embedding}, payload=payload
+                        )
+
+                        qdrant_client.upsert(
+                            collection_name=collection_name, points=[point], wait=True
+                        )
+
+                        logger.info(
+                            f"Successfully added document {j + 1}/{len(batch)} from batch {batch_num}"
+                        )
+                    except Exception as doc_e:
+                        logger.error(
+                            f"Failed to add document {j + 1} from batch {batch_num}: {str(doc_e)}"
+                        )
+                        # Continue with next document instead of failing completely
+                        continue
+            else:
+                logger.error(
+                    f"Failed to add single document in batch {batch_num}: {str(e)}"
+                )
+                # Continue with next batch instead of failing completely
+                continue
+
+    # Verify the upload by checking collection count for this namespace
+    try:
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+        count_result = qdrant_client.count(
+            collection_name=collection_name,
+            exact=True,
+            count_filter=Filter(
+                must=[
+                    FieldCondition(key="namespace", match=MatchValue(value=namespace))
+                ]
+            ),
+        )
+        logger.info(
+            f"Completed adding splits to collection {collection_name} with namespace {namespace}"
+        )
+        logger.info(
+            f"Total documents in collection with namespace '{namespace}': {count_result.count}"
+        )
+    except Exception as e:
+        logger.warning(f"Could not verify document count: {str(e)}")
+        logger.info(
+            f"Completed adding splits to collection {collection_name} with namespace {namespace}"
+        )
 
 
 def add_source_document_to_firebase(
@@ -221,26 +417,61 @@ def on_party_document_upload(
     pdf_blob.make_public()
     download_url = pdf_blob.public_url
 
-    prefix = build_vector_prefix(name)
-    for split in splits:
-        # Add id prefix to the split (https://docs.pinecone.io/guides/data/manage-rag-documents#use-id-prefixes)
-        # Rationale: Serverless indices do not support deletion be metadata (https://docs.pinecone.io/guides/data/delete-data#delete-records-by-metadata) but support deletion by id prefix (https://docs.pinecone.io/guides/data/manage-rag-documents#delete-all-records-for-a-parent-document)
-        uuid = uuid4()
-        split.id = f"{prefix}#{uuid}"
-
-        # Add relevant metadata to the split
-        split.metadata["source_document"] = name
-        split.metadata["url"] = download_url
-        split.metadata["file_name"] = file_name
-        split.metadata["document_name"] = document_name
-        split.metadata["document_publish_date"] = document_date_str
-        if "rede" in prefix:
-            split.page_content = f"Ausschnitt aus {prefix}\n\n{split.page_content}"
-
-    # Add the document to the index in the namespace of the party or the general one
+    # Extract party namespace from the file path
     party_subdir = name.split("/")[1]
 
-    add_to_index(splits, ALL_PARTIES_INDEX, namespace=party_subdir)
+    prefix = build_vector_prefix(name)
+    for split in splits:
+        # Generate deterministic UUID based on page content for Qdrant compatibility
+        qdrant_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, split.page_content))
+        split.id = qdrant_uuid
+
+        # Add comprehensive metadata following the migration pattern
+        # Core document metadata
+        split.metadata["source_document"] = str(name)  # Full path as string
+        split.metadata["url"] = str(download_url)  # URL as string
+        split.metadata["file_name"] = str(file_name)  # File name without extension
+        split.metadata["document_name"] = str(document_name)  # Document display name
+        split.metadata["document_publish_date"] = str(
+            document_date_str
+        )  # Date as string (YYYY-MM-DD)
+
+        # Numeric metadata for potential filtering/sorting
+        # Handle page number safely - it might already exist from PDF parsing
+        existing_page = split.metadata.get("page", 0)
+        if existing_page is None:
+            existing_page = 0
+        try:
+            split.metadata["page"] = float(existing_page)  # Page number as float
+        except (ValueError, TypeError):
+            split.metadata["page"] = 0.0  # Default to 0 if conversion fails
+
+        split.metadata["size"] = int(len(split.page_content))  # Content size as integer
+
+        # Timestamps for tracking
+        split.metadata["created_at"] = str(
+            datetime.now().isoformat()
+        )  # ISO format timestamp
+        split.metadata["updated_at"] = str(
+            datetime.now().isoformat()
+        )  # ISO format timestamp
+
+        # Document type classification (required for payload indexing)
+        split.metadata["document_type"] = "pdf"  # Document format
+        split.metadata["source_type"] = "party_document"  # Source category
+
+        # Add namespace for filtering/querying
+        split.metadata["namespace"] = party_subdir  # Party subdirectory as namespace
+
+        # Content enhancement for speeches
+        if "rede" in prefix:
+            split.page_content = f"Ausschnitt aus {prefix}\n\n{split.page_content}"
+            split.metadata["content_type"] = "speech_excerpt"
+        else:
+            split.metadata["content_type"] = "document_excerpt"
+
+    # Add the document to the collection with the namespace of the party
+    add_to_collection(splits, ALL_PARTIES_COLLECTION, namespace=party_subdir)
 
     # Add the source information to Firestore
     logger.info(
@@ -286,34 +517,156 @@ def on_party_document_deleted(
     delete_source_document_from_firebase(document_id=file_name, party_id=party_subdir)
     logger.info(f"Deleted source document {file_name} from Firestore")
 
-    # Initialize Pinecone and embeddings
-    embed = OpenAIEmbeddings(model=EMBEDDING_MODEL, openai_api_key=OPENAI_API_KEY.value)
-    pc = Pinecone(pinecone_api_key=PINECONE_API_KEY.value, embedding=embed)
+    # Initialize Qdrant client
+    qdrant_client = QdrantClient(
+        url=QDRANT_URL.value,
+        api_key=QDRANT_API_KEY.value if QDRANT_API_KEY.value else None,
+        timeout=120,  # Increase timeout to 120 seconds
+    )
 
-    # Define the index name and namespace
-    index_name = ALL_PARTIES_INDEX
-    existing_indexes = [index_info["name"] for index_info in pc.list_indexes()]
-    if index_name not in existing_indexes:
+    # Define the collection name
+    collection_name = ALL_PARTIES_COLLECTION
+    existing_collections = [
+        col.name for col in qdrant_client.get_collections().collections
+    ]
+    if collection_name not in existing_collections:
         logger.info(
-            f"Index {index_name} does not exist. No deletion of document splits required."
+            f"Collection {collection_name} does not exist. No deletion of document splits required."
         )
         return
 
-    index = pc.Index(index_name)
+    # Ensure payload indexes exist for filtering (same as in upload)
+    try:
+        qdrant_client.create_payload_index(
+            collection_name=collection_name,
+            field_name="namespace",
+            field_schema=PayloadSchemaType.KEYWORD,
+        )
+        logger.info(f"Ensured namespace index exists for collection {collection_name}")
+    except Exception as e:
+        logger.debug(f"Namespace index already exists: {str(e)}")
+
+    try:
+        qdrant_client.create_payload_index(
+            collection_name=collection_name,
+            field_name="source_document",
+            field_schema=PayloadSchemaType.KEYWORD,
+        )
+        logger.info(
+            f"Ensured source_document index exists for collection {collection_name}"
+        )
+    except Exception as e:
+        logger.debug(f"Source_document index already exists: {str(e)}")
+
     prefix = f"{build_vector_prefix(name)}#"
 
     logger.info(
-        f"Deleting splits from index {index_name} in namespace {party_subdir} with prefix {prefix}"
+        f"Deleting splits from collection {collection_name} with namespace {party_subdir} and prefix {prefix}"
     )
 
-    # Perform the deletion
-    for ids in index.list(prefix=prefix, namespace=party_subdir):
-        try:
-            logger.info(f"Deleting splits with ids: {ids}")
-            index.delete(ids, namespace=party_subdir)
-        except Exception as e:
-            logger.error(f"Error deleting splits: {e}")
+    # In Qdrant, we need to use filters to find and delete documents
+    # Filter based on namespace and source_document (following migration pattern)
+    from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+    filter_condition = Filter(
+        must=[
+            FieldCondition(key="namespace", match=MatchValue(value=party_subdir)),
+            FieldCondition(key="source_document", match=MatchValue(value=name)),
+        ]
+    )
 
     logger.info(
-        f"Deleted splits from index {index_name} in namespace {party_subdir} with prefix {prefix}"
+        f"Searching for documents to delete with filter: namespace={party_subdir}, source_document={name}"
+    )
+
+    # Search for documents to delete using scroll to get all matching points
+    try:
+        # Get count of points to delete (for logging only)
+        count_result = qdrant_client.count(
+            collection_name=collection_name,
+            exact=True,  # Use exact count to know how many to expect
+            count_filter=filter_condition,  # Note: parameter is 'count_filter' not 'filter'
+        )
+        expected_count = count_result.count
+
+        logger.info(f"Found {expected_count} documents to delete")
+
+        if expected_count == 0:
+            logger.info("No documents found to delete")
+            return
+
+        # Scroll through ALL matching documents with pagination
+        # Qdrant's scroll API returns results in pages, we need to iterate through all pages
+        point_ids = []
+        next_page_offset = None
+        scroll_limit = 100  # Process 100 points per scroll request
+
+        logger.info("Starting scroll through documents with filter")
+
+        while True:
+            scroll_result = qdrant_client.scroll(
+                collection_name=collection_name,
+                scroll_filter=filter_condition,
+                limit=scroll_limit,
+                offset=next_page_offset,  # Continue from where we left off
+                with_payload=False,  # Don't need payload for deletion
+                with_vectors=False,  # Don't need vectors for deletion
+            )
+
+            # scroll returns (points, next_page_offset)
+            points, next_page_offset = scroll_result
+
+            # Extract IDs from this page
+            page_ids = [point.id for point in points]
+            point_ids.extend(page_ids)
+
+            logger.info(
+                f"Scrolled {len(page_ids)} points (total so far: {len(point_ids)})"
+            )
+
+            # If no next_page_offset, we've reached the end
+            if next_page_offset is None or len(points) == 0:
+                break
+
+        logger.info(
+            f"Finished scrolling. Collected {len(point_ids)} point IDs to delete (expected {expected_count})"
+        )
+
+        if point_ids:
+            logger.info(
+                f"Deleting {len(point_ids)} document splits from collection {collection_name}"
+            )
+
+            # Delete in batches to avoid potential issues with large deletions
+            batch_size = 100
+            for i in range(0, len(point_ids), batch_size):
+                batch_ids = point_ids[i : i + batch_size]
+                batch_num = (i // batch_size) + 1
+                total_batches = (len(point_ids) + batch_size - 1) // batch_size
+
+                logger.info(
+                    f"Deleting batch {batch_num}/{total_batches} with {len(batch_ids)} points"
+                )
+
+                qdrant_client.delete(
+                    collection_name=collection_name,
+                    points_selector=PointIdsList(points=batch_ids),
+                    wait=True,  # Wait for operation to complete
+                )
+
+                logger.info(f"Successfully deleted batch {batch_num}/{total_batches}")
+
+            logger.info(f"Successfully deleted all {len(point_ids)} document splits")
+        else:
+            logger.info("No document splits found to delete")
+
+    except Exception as e:
+        logger.error(
+            f"Error deleting splits from collection {collection_name}: {str(e)}"
+        )
+        # Re-raise the exception to ensure the function fails if deletion fails
+        raise e
+
+    logger.info(
+        f"Deleted splits from collection {collection_name} with namespace {party_subdir}"
     )

@@ -16,8 +16,6 @@ import xxhash
 from src.models.chat import Message, Role
 from src.models.party import WAHL_CHAT_PARTY, Party
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 EXPECTED_API_NAME = "wahl-chat-api"
 
@@ -25,22 +23,34 @@ logger = logging.getLogger(__name__)
 
 
 def load_env():
-    # Build the path to the .env file
+    """Load environment variables from the .env file if API_NAME is not already set to the expected value (used as an indicator of correctly provided environment variables)."""
+    api_name = os.getenv("API_NAME")
+
+    if api_name == EXPECTED_API_NAME:
+        return
+
+    if api_name is not None:
+        raise ValueError(
+            f"API_NAME environment variable is set to '{api_name}' but expected '{EXPECTED_API_NAME}'. "
+            "Please check your environment configuration."
+        )
+
     env_path = BASE_DIR / ".env"
-    # Load the environment variables from the .env file
-    if not os.getenv("API_NAME") == EXPECTED_API_NAME:
-        # The environment variables are not loaded yet
+    if env_path.exists():
         print(f"Loading environment variables from {env_path}...")
         load_dotenv(env_path, override=True)
         print(f"Loaded environment variables from {env_path}.")
-        if not os.getenv("API_NAME"):
-            raise ValueError(
-                "API_NAME environment variable not set. Please check the contents of your .env file."
-            )
-        if not os.getenv("API_NAME") == EXPECTED_API_NAME:
-            raise ValueError(
-                "API_NAME environment variable not set as expected. Please check the contents of your .env file."
-            )
+
+    api_name = os.getenv("API_NAME")
+    if not api_name:
+        raise ValueError(
+            "API_NAME environment variable not set. Please set it in your environment or .env file."
+        )
+    if api_name != EXPECTED_API_NAME:
+        raise ValueError(
+            f"API_NAME environment variable is set to '{api_name}' but expected '{EXPECTED_API_NAME}'. "
+            "Please check your environment configuration or .env file."
+        )
 
 
 def safe_load_api_key(api_key: str) -> Optional[SecretStr]:

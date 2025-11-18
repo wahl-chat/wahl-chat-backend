@@ -4,6 +4,7 @@ import os
 from typing import Optional
 import firebase_admin
 from firebase_admin import firestore, credentials, firestore_async
+from pathlib import Path
 
 from src.models.chat import CachedResponse
 from src.models.party import Party
@@ -16,8 +17,13 @@ credentials_path = (
     if os.getenv("ENV") == "prod"
     else "wahl-chat-dev-firebase-adminsdk.json"
 )
-cred = credentials.Certificate(credentials_path)
-firebase_admin.initialize_app(cred)
+
+# If the credentials file does not exist, use the application default credentials
+if Path(credentials_path).exists():
+    cred = credentials.Certificate(credentials_path)
+    firebase_admin.initialize_app(cred)
+else:
+    firebase_admin.initialize_app()
 
 db = firestore.client()
 

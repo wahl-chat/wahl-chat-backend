@@ -181,3 +181,5 @@ cython_debug/
 *.dta
 .idea
 .vscode
+
+.DS_Store
