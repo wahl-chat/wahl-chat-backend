@@ -4,7 +4,6 @@
 
 import asyncio
 from datetime import datetime
-import os
 from typing import Dict, List
 import pytest
 import socketio

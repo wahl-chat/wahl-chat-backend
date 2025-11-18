@@ -6,9 +6,10 @@ from typing import Union
 import logging
 
 from langchain_openai import OpenAIEmbeddings
-from langchain_pinecone import PineconeVectorStore
+from langchain_qdrant import QdrantVectorStore
 from langchain_core.documents import Document
-from pinecone import Pinecone
+from qdrant_client import QdrantClient
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 from src.models.party import Party
 
 from src.utils import load_env, safe_load_api_key
@@ -21,31 +22,51 @@ logger = logging.getLogger(__name__)
 
 BASE_PATH = Path(__file__).parent
 EMBEDDING_SIZE = 3072  # Embedding sizes for the OpenAI models: https://platform.openai.com/docs/guides/embeddings#how-to-get-embeddings
-PARTY_INDEX_NAME = "all-parties-index"
-VOTING_BEHAVIOR_INDEX_NAME = "justified-voting-behavior-index"
-PARLIAMENTARY_QUESTIONS_INDEX_NAME = "parliamentary-questions-index"
+
+# Get environment suffix
+env = os.getenv("ENV", "dev")
+env_suffix = f"_{env}" if env in ["prod", "dev"] else "_dev"
+
+PARTY_INDEX_NAME = f"all_parties{env_suffix}"
+VOTING_BEHAVIOR_INDEX_NAME = f"justified_voting_behavior{env_suffix}"
+PARLIAMENTARY_QUESTIONS_INDEX_NAME = f"parliamentary_questions{env_suffix}"
 
 embed = OpenAIEmbeddings(
     model="text-embedding-3-large", openai_api_key=safe_load_api_key("OPENAI_API_KEY")
 )
 
-pc = Pinecone(pinecone_api_key=os.getenv("PINECONE_API_KEY"), embedding=embed)
-
-party_index = pc.Index(PARTY_INDEX_NAME)
-voting_behavior_index = pc.Index(VOTING_BEHAVIOR_INDEX_NAME)
-parliamentary_questions_index = pc.Index(PARLIAMENTARY_QUESTIONS_INDEX_NAME)
-
-pinecone_vector_store = PineconeVectorStore(index=party_index, embedding=embed)
-voting_behavior_vector_store = PineconeVectorStore(
-    index=voting_behavior_index, embedding=embed
+# Initialize Qdrant client
+qdrant_client = QdrantClient(
+    url=os.getenv("QDRANT_URL", "http://localhost:6333"),
+    api_key=os.getenv("QDRANT_API_KEY"),
 )
-parliamentary_questions_vector_store = PineconeVectorStore(
-    index=parliamentary_questions_index, embedding=embed
+
+# Initialize Qdrant vector stores
+qdrant_vector_store = QdrantVectorStore(
+    client=qdrant_client,
+    collection_name=PARTY_INDEX_NAME,
+    embedding=embed,
+    vector_name="dense",
+    content_payload_key="text",
+)
+voting_behavior_vector_store = QdrantVectorStore(
+    client=qdrant_client,
+    collection_name=VOTING_BEHAVIOR_INDEX_NAME,
+    embedding=embed,
+    vector_name="dense",
+    content_payload_key="text",
+)
+parliamentary_questions_vector_store = QdrantVectorStore(
+    client=qdrant_client,
+    collection_name=PARLIAMENTARY_QUESTIONS_INDEX_NAME,
+    embedding=embed,
+    vector_name="dense",
+    content_payload_key="text",
 )
 
 
 async def _identify_relevant_documents(
-    vector_store: PineconeVectorStore,
+    vector_store: QdrantVectorStore,
     namespace: str,
     rag_query: str,
     n_docs: int = 5,
@@ -53,17 +74,44 @@ async def _identify_relevant_documents(
 ) -> list[Document]:
     """
     Identify relevant documents based on the provided query and namespace.
+    Uses direct Qdrant client to ensure all metadata is preserved.
     """
-    relevant_docs_with_scores = (
-        await vector_store.asimilarity_search_with_relevance_scores(
-            rag_query,
-            namespace=namespace,
-            k=n_docs,
-            score_threshold=score_threshold,
-        )
+    # Get query vector
+    query_vector = await embed.aembed_query(rag_query)
+
+    # Create filter for the namespace
+    filter_condition = Filter(
+        must=[FieldCondition(key="namespace", match=MatchValue(value=namespace))]
     )
-    relevant_docs = [doc for doc, _ in relevant_docs_with_scores]
-    return relevant_docs
+
+    # Search directly using Qdrant client to preserve all metadata
+    # Note: Using sync client in async context - this might need optimization later
+    search_result = qdrant_client.search(
+        collection_name=vector_store.collection_name,
+        query_vector=("dense", query_vector),
+        limit=n_docs,
+        with_payload=True,
+        query_filter=filter_condition,
+        score_threshold=score_threshold,
+    )
+
+    # Create LangChain Documents manually to preserve all metadata
+    documents = []
+    for point in search_result:
+        if point.payload is None:
+            continue
+
+        # Extract content from text field
+        content = point.payload.get("text", "")
+
+        # Extract metadata (everything except text)
+        metadata = {k: v for k, v in point.payload.items() if k != "text"}
+
+        # Create Document with proper content and metadata
+        doc = Document(page_content=content, metadata=metadata)
+        documents.append(doc)
+
+    return documents
 
 
 async def identify_relevant_docs(
@@ -72,16 +120,13 @@ async def identify_relevant_docs(
     n_docs: int = 5,
     score_threshold: float = 0.5,
 ) -> list[Document]:
-    relevant_docs_with_scores = (
-        await pinecone_vector_store.asimilarity_search_with_relevance_scores(
-            rag_query,
-            namespace=party.party_id,
-            k=n_docs,
-            score_threshold=score_threshold,
-        )
+    return await _identify_relevant_documents(
+        vector_store=qdrant_vector_store,
+        namespace=party.party_id,
+        rag_query=rag_query,
+        n_docs=n_docs,
+        score_threshold=score_threshold,
     )
-    relevant_docs = [doc for doc, _ in relevant_docs_with_scores]
-    return relevant_docs
 
 
 # relevant docs with reranking
@@ -91,40 +136,17 @@ async def identify_relevant_docs_with_reranking(
     n_docs: int = 20,
     score_threshold: float = 0.5,
 ) -> list[Document]:
-    relevant_docs_with_scores = (
-        await pinecone_vector_store.asimilarity_search_with_relevance_scores(
-            rag_query,
-            namespace=party.party_id,
-            k=n_docs,
-            score_threshold=score_threshold,
-        )
+    relevant_docs = await _identify_relevant_documents(
+        vector_store=qdrant_vector_store,
+        namespace=party.party_id,
+        rag_query=rag_query,
+        n_docs=n_docs,
+        score_threshold=score_threshold,
     )
-    relevant_docs = [doc for doc, _ in relevant_docs_with_scores]
-    # dict matching id to document
-    if len(relevant_docs) != 0:
-        relevant_docs_matching_dict = {}
-        relevant_docs_pinecone_list = []
-        for index, doc in enumerate(relevant_docs):
-            relevant_docs_matching_dict[f"{index}"] = doc
-            relevant_docs_pinecone_list.append(
-                {"id": str(index), "text": doc.page_content}
-            )
 
-        results = pc.inference.rerank(
-            model="cohere-rerank-3.5",
-            query=rag_query,
-            documents=relevant_docs_pinecone_list,
-            top_n=5,
-            return_documents=True,
-        )
-
-        final_docs = [
-            relevant_docs_matching_dict[element["document"]["id"]]
-            for element in results.data
-        ]
-        return final_docs
-    else:
-        return relevant_docs
+    # For now, return without external reranking since we're moving away from Pinecone
+    # TODO: Implement alternative reranking if needed
+    return relevant_docs[:5]  # Return top 5 documents
 
 
 async def identify_relevant_docs_with_llm_based_reranking(
@@ -135,20 +157,18 @@ async def identify_relevant_docs_with_llm_based_reranking(
     n_docs: int = 20,
     score_threshold: float = 0.5,
 ) -> list[Document]:
-    relevant_docs_with_scores = (
-        await pinecone_vector_store.asimilarity_search_with_relevance_scores(
-            rag_query,
-            namespace=party.party_id,
-            k=n_docs,
-            score_threshold=score_threshold,
-        )
+    relevant_docs = await _identify_relevant_documents(
+        vector_store=qdrant_vector_store,
+        namespace=party.party_id,
+        rag_query=rag_query,
+        n_docs=n_docs,
+        score_threshold=score_threshold,
     )
-    # sort the relevant docs by score in descending order to be sure that the most relevant docs are up top
-    relevant_docs_with_scores = sorted(
-        relevant_docs_with_scores, key=lambda x: x[1], reverse=True
-    )
-    relevant_docs = [doc for doc, _ in relevant_docs_with_scores]
-    # construct string to pass to llm
+
+    # Note: We lose the score information when using direct Qdrant search
+    # If score sorting is critical, we could modify _identify_relevant_documents
+    # to return scores as well
+
     if len(relevant_docs) >= 5:
         # get indices of relevant docs
         relevant_docs = await rerank_documents(

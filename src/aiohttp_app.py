@@ -53,6 +53,12 @@ async def api_key_middleware(request, handler):
     return await handler(request)
 
 
+@routes.get("/healthz")
+async def health_check(request):
+    """Kubernetes health check endpoint."""
+    return web.json_response({"status": "ok"})
+
+
 @routes.post(f"{route_prefix}/get-parliamentary-question")
 @inject_params
 async def get_parliamentary_question(body: ParliamentaryQuestionRequestDto):
