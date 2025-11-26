@@ -15,6 +15,11 @@ About page: https://wahl.chat/about-us </br>
 #### Our goal in a nutshell
 The aim of wahl.chat is to enable users to engage in a contemporary way with the positions of political parties and to receive answers to individual questions that can be substantiated with sources.
 
+#### Contributions welcome
+We appreciate contributions from our community. Please take a look at the open issues, if you are interested.  
+If you are unsure where to start, please contact robin@wahl.chat. 
+Further specifications coming soon.
+
 ## License
 This project is **source-available** under the **PolyForm Noncommercial 1.0.0** license.
 - Free for **non-commercial** use (see LICENSE for permitted purposes)
