@@ -84,7 +84,9 @@ class ProConPerspectiveDto(BaseModel):
     request_id: Optional[str] = Field(
         ..., description="The ID of the Pro/Con assessment request if applicable"
     )
-    message: Message = Field(..., description="The Pro/Con assessment message")
+    message: Optional[Message] = Field(
+        default=None, description="The Pro/Con assessment message"
+    )
     status: Status = Field(..., description="The status of the event")
 
 
@@ -155,6 +157,7 @@ class ParliamentaryQuestionDto(BaseModel):
 
 
 class ChatUserMessageDto(BaseModel):
+    id: str = Field(..., description="The ID of the chat user message")
     session_id: str = Field(
         ..., description="The ID of the chat session to which the message belongs"
     )
@@ -229,6 +232,9 @@ class PartyResponseCompleteDto(BaseModel):
         description="The ID of the party the message is coming from. None for general perplexity",
     )
     complete_message: str = Field(..., description="The complete message content")
+    message_id: Optional[str] = Field(
+        default=None, description="The unique ID of the assistant message"
+    )
     status: Status = Field(..., description="The status of the event")
 
 
@@ -305,3 +311,73 @@ class WahlChatSwiperAnswerDto(BaseModel):
     message: Message = Field(..., description="The message including sources")
     title: str = Field(..., description="The new title of the chat session")
     quick_replies: List[str] = Field(..., description="The quick replies for the user")
+
+
+# Voice-related DTOs
+
+
+class VoiceMessageRequestDto(BaseModel):
+    session_id: str = Field(..., description="The ID of the chat session")
+    grouped_message_id: str = Field(
+        ..., description="The ID of the grouped message (document id)"
+    )
+    message_id: str = Field(
+        ..., description="Client-generated ID to correlate request with response"
+    )
+    audio_base64: str = Field(..., description="Base64-encoded audio data (webm)")
+    party_ids: List[str] = Field(
+        ..., description="The IDs of the parties that are part of the chat session"
+    )
+    user_is_logged_in: bool = Field(
+        description="Whether the user is logged in or not", default=False
+    )
+    language: str = Field(
+        default="de", description="Language code for transcription (ISO-639-1)"
+    )
+
+    @field_validator("session_id")
+    def session_id_must_not_be_empty(cls, value):
+        if not value.strip():
+            raise ValidationError("Session ID cannot be empty or whitespace.")
+        return value
+
+
+class VoiceTranscribedDto(BaseModel):
+    session_id: str = Field(..., description="The ID of the chat session")
+    grouped_message_id: str = Field(
+        ..., description="Wrapper ID to correlate request with response"
+    )
+    message_id: str = Field(
+        ..., description="Inner ID to correlate request with response"
+    )
+    transcribed_text: str = Field(..., description="The transcribed text from audio")
+
+
+class TextToSpeechRequestDto(BaseModel):
+    session_id: str = Field(..., description="The ID of the chat session")
+    message_id: str = Field(..., description="The ID of the message to synthesize")
+    party_id: str = Field(
+        ..., description="The ID of the party whose message to synthesize"
+    )
+    voice: str = Field(
+        default="nova",
+        description="OpenAI TTS voice: alloy, echo, fable, onyx, nova, shimmer",
+    )
+
+    @field_validator("session_id")
+    def session_id_must_not_be_empty(cls, value):
+        if not value.strip():
+            raise ValidationError("Session ID cannot be empty or whitespace.")
+        return value
+
+
+class TextToSpeechResponseDto(BaseModel):
+    session_id: str = Field(..., description="The ID of the chat session")
+    message_id: str = Field(
+        ..., description="The ID of the message that was synthesized"
+    )
+    party_id: str = Field(
+        ..., description="The ID of the party whose message was synthesized"
+    )
+    audio_base64: str = Field(..., description="Base64-encoded MP3 audio data")
+    status: Status = Field(..., description="The status of the event")

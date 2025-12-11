@@ -62,7 +62,7 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         name="google-gemini-2.0-flash",
         model=google_gemini_2_flash,
         sizes=[LLMSize.SMALL, LLMSize.LARGE],
-        priority=100,
+        priority=50,  # Temporarily lowered for debugging (was 100)
         user_capacity_per_minute=CAPACITY_GEMINI_2_FLASH,
         is_at_rate_limit=False,
     ),
@@ -79,7 +79,7 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         name="openai-gpt-4o",
         model=openai_gpt_4o,
         sizes=[LLMSize.LARGE],
-        priority=98,
+        priority=110,  # Temporarily raised for debugging (was 98)
         user_capacity_per_minute=CAPACITY_GPT_4O_OPENAI_TIER_5,
         is_at_rate_limit=False,
         premium_only=False,
@@ -88,7 +88,7 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         name="azure-gpt-4o-mini",
         model=azure_gpt_4o_mini,
         sizes=[LLMSize.SMALL],
-        priority=50,
+        priority=80,  # Temporarily raised for debugging (was 50)
         user_capacity_per_minute=CAPACITY_GPT_4O_MINI_AZURE,
         is_at_rate_limit=False,
     ),
@@ -96,7 +96,7 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         name="openai-gpt-4o-mini",
         model=openai_gpt_4o_mini,
         sizes=[LLMSize.SMALL],
-        priority=40,
+        priority=100,  # Temporarily raised for debugging (was 40)
         user_capacity_per_minute=CAPACITY_GPT_4O_MINI_OPENAI_TIER_5,
         is_at_rate_limit=False,
     ),
@@ -147,7 +147,7 @@ DETERMINISTIC_LLMS: list[LLM] = [
         name="openai-gpt-4o-mini-det",
         model=openai_gpt_4o_mini_det,
         sizes=[LLMSize.SMALL],
-        priority=80,
+        priority=110,  # Temporarily raised for debugging (was 80)
         user_capacity_per_minute=CAPACITY_GPT_4O_MINI_OPENAI_TIER_5,
         is_at_rate_limit=False,
     ),

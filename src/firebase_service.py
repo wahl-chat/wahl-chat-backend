@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
-
+import logging
 import os
 from typing import Optional
 import firebase_admin
@@ -11,6 +11,8 @@ from src.models.party import Party
 from src.utils import load_env
 
 load_env()
+
+logger = logging.getLogger(__name__)
 
 credentials_path = (
     "wahl-chat-firebase-adminsdk.json"
@@ -72,3 +74,63 @@ async def awrite_cached_answer_for_party(
 async def awrite_llm_status(is_at_rate_limit: bool) -> None:
     llm_status_ref = async_db.collection("system_status").document("llm_status")
     await llm_status_ref.set({"is_at_rate_limit": is_at_rate_limit})
+
+
+async def aupdate_voice_transcription(
+    session_id: str,
+    grouped_message_id: str,
+    message_id: str,
+    transcribed_text: str,
+) -> None:
+    """
+    Update Firebase with the transcribed text for a voice message.
+    Path: chat_sessions/{session_id}/messages/{message_id}
+    """
+    doc_ref = (
+        async_db.collection("chat_sessions")
+        .document(session_id)
+        .collection("messages")
+        .document(grouped_message_id)
+    )
+    doc = await doc_ref.get()
+
+    if not doc.exists:
+        raise ValueError(f"Message {message_id} not found in session {session_id}")
+
+    data = doc.to_dict()
+
+    # Update the inner message content
+    for msg in data["messages"]:
+        if msg["id"] == message_id:
+            msg["content"] = transcribed_text
+
+    # Set transcription status to complete
+    data["voice_transcription"] = {"status": "transcribed"}
+
+    await doc_ref.update(data)
+
+
+async def aupdate_voice_transcription_error(
+    session_id: str,
+    message_id: str,
+    error_message: str,
+) -> None:
+    """
+    Update Firebase with an error status for a failed voice transcription.
+    Path: chat_sessions/{session_id}/messages/{message_id}
+    """
+    doc_ref = (
+        async_db.collection("chat_sessions")
+        .document(session_id)
+        .collection("messages")
+        .document(message_id)
+    )
+    doc = await doc_ref.get()
+
+    if not doc.exists:
+        return  # Don't raise on error path
+
+    data = doc.to_dict()
+    data["voice_transcription"] = {"status": "error", "error": error_message}
+
+    await doc_ref.update(data)
