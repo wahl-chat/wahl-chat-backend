@@ -87,7 +87,7 @@ async def synthesize_speech(
     logger.info(f"Synthesizing speech ({len(text)} chars)")
 
     response = await client.audio.speech.create(
-        model="tts-1",
+        model="gpt-4o-mini-tts",
         voice="nova",
         input=text,
         response_format="mp3",
