@@ -162,13 +162,24 @@ class ChatUserMessageDto(BaseModel):
         ..., description="The ID of the chat session to which the message belongs"
     )
     user_message: str = Field(
-        ..., description="The user message to answer", max_length=500
+        default="", description="The user message to answer", max_length=500
     )
     party_ids: List[str] = Field(
         ..., description="The IDs of the parties that are part of the chat session"
     )
     user_is_logged_in: bool = Field(
         description="Whether the user is logged in or not", default=False
+    )
+    # Optional audio fields for voice messages
+    audio_bytes: Optional[bytes] = Field(
+        default=None, description="Raw binary audio data (webm) for voice messages"
+    )
+    grouped_message_id: Optional[str] = Field(
+        default=None,
+        description="The ID of the grouped message (document id) for voice messages",
+    )
+    language: str = Field(
+        default="de", description="Language code for transcription (ISO-639-1)"
     )
 
     @field_validator("session_id")
@@ -314,32 +325,6 @@ class WahlChatSwiperAnswerDto(BaseModel):
 
 
 # Voice-related DTOs
-
-
-class VoiceMessageRequestDto(BaseModel):
-    session_id: str = Field(..., description="The ID of the chat session")
-    grouped_message_id: str = Field(
-        ..., description="The ID of the grouped message (document id)"
-    )
-    message_id: str = Field(
-        ..., description="Client-generated ID to correlate request with response"
-    )
-    audio_base64: str = Field(..., description="Base64-encoded audio data (webm)")
-    party_ids: List[str] = Field(
-        ..., description="The IDs of the parties that are part of the chat session"
-    )
-    user_is_logged_in: bool = Field(
-        description="Whether the user is logged in or not", default=False
-    )
-    language: str = Field(
-        default="de", description="Language code for transcription (ISO-639-1)"
-    )
-
-    @field_validator("session_id")
-    def session_id_must_not_be_empty(cls, value):
-        if not value.strip():
-            raise ValidationError("Session ID cannot be empty or whitespace.")
-        return value
 
 
 class VoiceTranscribedDto(BaseModel):

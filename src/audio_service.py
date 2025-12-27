@@ -31,14 +31,14 @@ def get_openai_client() -> AsyncOpenAI:
 
 
 async def transcribe_audio(
-    audio_base64: str,
-    language: str = "de",
+        audio_bytes: bytes,
+        language: str = "de",
 ) -> str:
     """
-    Transcribe base64-encoded audio using OpenAI Whisper.
+    Transcribe audio using OpenAI Whisper.
 
     Args:
-        audio_base64: Base64-encoded audio data (webm)
+        audio_bytes: Raw binary audio data (webm)
         language: language code for transcription. For now, we assume german but as soon as we support proper i18n
                     in the frontend we will handle it based on the users preferences.
 
@@ -46,9 +46,6 @@ async def transcribe_audio(
         Transcribed text
     """
     client = get_openai_client()
-
-    # Decode base64 to bytes
-    audio_bytes = base64.b64decode(audio_base64)
 
     # Create a file-like object with a name (OpenAI needs the filename extension)
     audio_file = io.BytesIO(audio_bytes)
@@ -71,7 +68,7 @@ async def transcribe_audio(
 
 
 async def synthesize_speech(
-    text: str,
+        text: str,
 ) -> str:
     """
     Generate speech from text using OpenAI TTS.

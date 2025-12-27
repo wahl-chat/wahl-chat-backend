@@ -36,7 +36,6 @@ from src.models.dtos import (
     SummaryDto,
     TextToSpeechRequestDto,
     TextToSpeechResponseDto,
-    VoiceMessageRequestDto,
     VoiceTranscribedDto,
     VotingBehaviorRequestDto,
     VotingBehaviorDto,
@@ -249,7 +248,10 @@ async def get_pro_con_perspective(sid: str, body: dict):
 
 @sio.on("chat_answer_request")
 async def chat_answer_request(sid: str, body: dict):
-    """Socket event handler for text chat - validates DTO, then calls generate_chat_answer."""
+    """Socket event handler for chat - handles both text and voice messages.
+
+    If audio_bytes is present, transcribes the audio first, then processes through chat flow.
+    """
     logger.info(f"Client {sid} requested chat answer with body: {body}")
     try:
         chat_message_data = ChatUserMessageDto(**body)
@@ -271,117 +273,94 @@ async def chat_answer_request(sid: str, body: dict):
 
     logger.debug(f"Chat message data: {chat_message_data}")
 
+    user_message_content = chat_message_data.user_message
+
+    # Handle voice message if audio is present
+    if chat_message_data.audio_bytes:
+        try:
+            # Transcribe the audio
+            transcribed_text = await transcribe_audio(
+                audio_bytes=chat_message_data.audio_bytes,
+                language=chat_message_data.language,
+            )
+
+            # Update Firebase and emit transcription only if grouped_message_id is provided
+            if chat_message_data.grouped_message_id:
+                await aupdate_voice_transcription(
+                    session_id=chat_message_data.session_id,
+                    grouped_message_id=chat_message_data.grouped_message_id,
+                    message_id=chat_message_data.id,
+                    transcribed_text=transcribed_text,
+                )
+
+                # Emit the transcription to the client
+                transcribed_dto = VoiceTranscribedDto(
+                    session_id=chat_message_data.session_id,
+                    grouped_message_id=chat_message_data.grouped_message_id,
+                    message_id=chat_message_data.id,
+                    transcribed_text=transcribed_text,
+                )
+                await sio.emit(
+                    "voice_transcribed", transcribed_dto.model_dump(), to=sid
+                )
+
+            # Use transcribed text as the user message
+            user_message_content = transcribed_text
+
+        except openai.BadRequestError as e:
+            logger.error(
+                f"Error transcribing audio for client {sid}: {e}", exc_info=True
+            )
+            await aupdate_voice_transcription_error(
+                session_id=chat_message_data.session_id,
+                message_id=chat_message_data.id,
+                error_message=f"Fehler bei der Spracherkennung: {e}",
+            )
+            chat_response_complete_dto = ChatResponseCompleteDto(
+                session_id=chat_message_data.session_id,
+                status=Status(
+                    indicator=StatusIndicator.ERROR,
+                    message=f"Fehler bei der Spracherkennung: {e}",
+                ),
+            )
+            await sio.emit(
+                "chat_response_complete",
+                chat_response_complete_dto.model_dump(),
+                to=sid,
+            )
+            return
+        except Exception as e:
+            logger.error(
+                f"Error processing voice message for client {sid}: {e}", exc_info=True
+            )
+            await aupdate_voice_transcription_error(
+                session_id=chat_message_data.session_id,
+                message_id=chat_message_data.id,
+                error_message="Es ist ein Fehler bei der Verarbeitung der Sprachnachricht aufgetreten.",
+            )
+            chat_response_complete_dto = ChatResponseCompleteDto(
+                session_id=chat_message_data.session_id,
+                status=Status(
+                    indicator=StatusIndicator.ERROR,
+                    message="Es ist ein Fehler bei der Verarbeitung der Sprachnachricht aufgetreten.",
+                ),
+            )
+            await sio.emit(
+                "chat_response_complete",
+                chat_response_complete_dto.model_dump(),
+                to=sid,
+            )
+            return
+
     await generate_chat_answer(
         sio=sio,
         sid=sid,
         session_id=chat_message_data.session_id,
-        user_message_content=chat_message_data.user_message,
+        user_message_content=user_message_content,
         party_ids=chat_message_data.party_ids,
         user_is_logged_in=chat_message_data.user_is_logged_in,
         message_id=chat_message_data.id,
     )
-
-
-@sio.on("voice_message_request")
-async def handle_voice_message(sid: str, body: dict):
-    """
-    Socket event handler for voice messages.
-    Transcribes audio, emits transcription, then processes through chat flow.
-    """
-    logger.info(f"Client {sid} requested voice message")
-    try:
-        request_data = VoiceMessageRequestDto(**body)
-    except ValidationError as e:
-        logger.error(f"Error validating voice message data for client {sid}: {e}")
-        chat_response_complete_dto = ChatResponseCompleteDto(
-            session_id=None,
-            status=Status(
-                indicator=StatusIndicator.ERROR,
-                message=str(e),
-            ),
-        )
-        await sio.emit(
-            "chat_response_complete",
-            chat_response_complete_dto.model_dump(),
-            to=sid,
-        )
-        return
-
-    try:
-        # Transcribe the audio
-        transcribed_text = await transcribe_audio(
-            audio_base64=request_data.audio_base64,
-            language=request_data.language,
-        )
-
-        # Update Firebase with transcription
-        await aupdate_voice_transcription(
-            session_id=request_data.session_id,
-            grouped_message_id=request_data.grouped_message_id,
-            message_id=request_data.message_id,
-            transcribed_text=transcribed_text,
-        )
-
-        # Emit the transcription to the client
-        transcribed_dto = VoiceTranscribedDto(
-            session_id=request_data.session_id,
-            grouped_message_id=request_data.grouped_message_id,
-            message_id=request_data.message_id,
-            transcribed_text=transcribed_text,
-        )
-        await sio.emit("voice_transcribed", transcribed_dto.model_dump(), to=sid)
-
-        # Continue with normal chat flow
-        await generate_chat_answer(
-            sio=sio,
-            sid=sid,
-            session_id=request_data.session_id,
-            user_message_content=transcribed_text,
-            party_ids=request_data.party_ids,
-            user_is_logged_in=request_data.user_is_logged_in,
-        )
-    except openai.BadRequestError as e:
-        logger.error(f"Error transcribing audio for client {sid}: {e}", exc_info=True)
-        # Update Firebase with error status
-        await aupdate_voice_transcription_error(
-            session_id=request_data.session_id,
-            message_id=request_data.message_id,
-            error_message=f"Fehler bei der Spracherkennung: {e}",
-        )
-        chat_response_complete_dto = ChatResponseCompleteDto(
-            session_id=request_data.session_id,
-            status=Status(
-                indicator=StatusIndicator.ERROR,
-                message=f"Fehler bei der Spracherkennung: {e}",
-            ),
-        )
-        await sio.emit(
-            "chat_response_complete",
-            chat_response_complete_dto.model_dump(),
-            to=sid,
-        )
-    except Exception as e:
-        logger.error(
-            f"Error processing voice message for client {sid}: {e}", exc_info=True
-        )
-        # Update Firebase with error status
-        await aupdate_voice_transcription_error(
-            session_id=request_data.session_id,
-            message_id=request_data.message_id,
-            error_message="Es ist ein Fehler bei der Verarbeitung der Sprachnachricht aufgetreten.",
-        )
-        chat_response_complete_dto = ChatResponseCompleteDto(
-            session_id=request_data.session_id,
-            status=Status(
-                indicator=StatusIndicator.ERROR,
-                message="Es ist ein Fehler bei der Verarbeitung der Sprachnachricht aufgetreten.",
-            ),
-        )
-        await sio.emit(
-            "chat_response_complete",
-            chat_response_complete_dto.model_dump(),
-            to=sid,
-        )
 
 
 @sio.on("text_to_speech_request")
@@ -557,8 +536,8 @@ async def get_voting_behavior(sid: str, body: dict):
                         # Sleep for a short time to simulate processing time
                         await asyncio.sleep(0.025)
                     split_chunk_content = chunk_content[
-                        i : i + MAX_RESPONSE_CHUNK_LENGTH
-                    ]
+                                          i: i + MAX_RESPONSE_CHUNK_LENGTH
+                                          ]
                     summary_chunk_dto = VotingBehaviorSummaryChunkDto(
                         request_id=request_data.request_id,
                         chunk_index=chunk_index,
@@ -752,8 +731,8 @@ async def swiper_assistant_answer_request(sid: str, body: dict):
             chat_history = chat_session.chat_history
             # Append the user message if it not identical to the last message
             if (
-                len(chat_history) == 0
-                or chat_history[-1].content != user_message.content
+                    len(chat_history) == 0
+                    or chat_history[-1].content != user_message.content
             ):
                 chat_history.append(user_message)
     except Exception as e:

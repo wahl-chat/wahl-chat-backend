@@ -75,9 +75,9 @@ def get_cors_allowed_origins(env: Optional[str]) -> Union[str, list[str]]:
 
 
 def build_chat_history_string(
-    chat_history: list[Message],
-    parties: list[Party],
-    default_assistant_name=WAHL_CHAT_PARTY.name,
+        chat_history: list[Message],
+        parties: list[Party],
+        default_assistant_name=WAHL_CHAT_PARTY.name,
 ) -> str:
     chat_history_string = ""
     for i, message in enumerate(chat_history):
@@ -98,7 +98,7 @@ def build_chat_history_string(
 
 
 def build_document_string_for_context(
-    doc_num: int, doc: Document, doc_num_label="ID"
+        doc_num: int, doc: Document, doc_num_label="ID"
 ) -> str:
     return f"""{doc_num_label}: {doc_num}
 - Dokumentname: {doc.metadata.get("document_name", "unbekannt")}
@@ -189,14 +189,10 @@ def sanitize_text_for_speech(text: str) -> str:
     text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)  # **bold** → bold
     text = re.sub(r"\*(.+?)\*", r"\1", text)  # *italic* → italic
 
-    # Remove markdown headers
-    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
-
-    # Remove bullet points (keep content)
-    text = re.sub(r"^[\-\*]\s*", "", text, flags=re.MULTILINE)
-
     # Clean up extra whitespace
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = text.strip()
+
+    logger.debug(f"Sanitized text: {text}")
 
     return text
