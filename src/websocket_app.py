@@ -536,8 +536,8 @@ async def get_voting_behavior(sid: str, body: dict):
                         # Sleep for a short time to simulate processing time
                         await asyncio.sleep(0.025)
                     split_chunk_content = chunk_content[
-                                          i: i + MAX_RESPONSE_CHUNK_LENGTH
-                                          ]
+                        i : i + MAX_RESPONSE_CHUNK_LENGTH
+                    ]
                     summary_chunk_dto = VotingBehaviorSummaryChunkDto(
                         request_id=request_data.request_id,
                         chunk_index=chunk_index,
@@ -731,8 +731,8 @@ async def swiper_assistant_answer_request(sid: str, body: dict):
             chat_history = chat_session.chat_history
             # Append the user message if it not identical to the last message
             if (
-                    len(chat_history) == 0
-                    or chat_history[-1].content != user_message.content
+                len(chat_history) == 0
+                or chat_history[-1].content != user_message.content
             ):
                 chat_history.append(user_message)
     except Exception as e:

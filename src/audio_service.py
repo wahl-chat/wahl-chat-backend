@@ -31,8 +31,8 @@ def get_openai_client() -> AsyncOpenAI:
 
 
 async def transcribe_audio(
-        audio_bytes: bytes,
-        language: str = "de",
+    audio_bytes: bytes,
+    language: str = "de",
 ) -> str:
     """
     Transcribe audio using OpenAI Whisper.
@@ -68,7 +68,7 @@ async def transcribe_audio(
 
 
 async def synthesize_speech(
-        text: str,
+    text: str,
 ) -> str:
     """
     Generate speech from text using OpenAI TTS.
