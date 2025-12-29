@@ -38,6 +38,12 @@ google_gemini_2_flash = ChatGoogleGenerativeAI(
     max_retries=0,
 )
 
+google_gemini_3_flash_preview = ChatGoogleGenerativeAI(
+    model="gemini-3.0-flash-preview",
+    api_key=safe_load_api_key("GOOGLE_API_KEY"),
+    max_retries=0,
+)
+
 openai_gpt_4o = ChatOpenAI(
     model="gpt-4o-2024-08-06",
     api_key=safe_load_api_key("OPENAI_API_KEY"),
@@ -52,10 +58,17 @@ openai_gpt_4o_mini = ChatOpenAI(
 
 NON_DETERMINISTIC_LLMS: list[LLM] = [
     LLM(
+        name="google-gemini-3.0-flash-preview",
+        model=google_gemini_3_flash_preview,
+        sizes=[LLMSize.SMALL, LLMSize.LARGE],
+        priority=100,
+        is_at_rate_limit=False,
+    ),
+    LLM(
         name="google-gemini-2.0-flash",
         model=google_gemini_2_flash,
         sizes=[LLMSize.SMALL, LLMSize.LARGE],
-        priority=100,
+        priority=95,
         is_at_rate_limit=False,
     ),
     LLM(
