@@ -27,9 +27,26 @@ EMBEDDING_SIZE = 3072  # Embedding sizes for the OpenAI models: https://platform
 env = os.getenv("ENV", "dev")
 env_suffix = f"_{env}" if env in ["prod", "dev"] else "_dev"
 
+# Default context for backwards compatibility
+DEFAULT_CONTEXT_ID = "bundestagswahl-2025"
+
+# Legacy collection names (kept for backwards compatibility)
 PARTY_INDEX_NAME = f"all_parties{env_suffix}"
 VOTING_BEHAVIOR_INDEX_NAME = f"justified_voting_behavior{env_suffix}"
 PARLIAMENTARY_QUESTIONS_INDEX_NAME = f"parliamentary_questions{env_suffix}"
+
+
+def get_context_collection_name(context_id: str) -> str:
+    """Get the Qdrant collection name for a given context.
+
+    Args:
+        context_id: The context identifier (e.g., 'bundestagswahl-2025')
+
+    Returns:
+        The collection name in format: context_{context_id}_{env}
+    """
+    return f"context_{context_id}{env_suffix}"
+
 
 embed = OpenAIEmbeddings(
     model="text-embedding-3-large", openai_api_key=safe_load_api_key("OPENAI_API_KEY")
@@ -65,17 +82,58 @@ parliamentary_questions_vector_store = QdrantVectorStore(
 )
 
 
+def _get_vector_store_for_context(context_id: str) -> QdrantVectorStore:
+    """Get or create a QdrantVectorStore for a given context.
+
+    For the default context (bundestagswahl-2025), uses the legacy collection
+    name for backwards compatibility. For other contexts, uses the new
+    context-scoped naming convention.
+
+    Args:
+        context_id: The context identifier
+
+    Returns:
+        QdrantVectorStore instance for the context
+    """
+    # Use legacy collection for default context (backwards compatibility)
+    if context_id == DEFAULT_CONTEXT_ID:
+        collection_name = PARTY_INDEX_NAME
+    else:
+        collection_name = get_context_collection_name(context_id)
+
+    return QdrantVectorStore(
+        client=qdrant_client,
+        collection_name=collection_name,
+        embedding=embed,
+        vector_name="dense",
+        content_payload_key="text",
+    )
+
+
 async def _identify_relevant_documents(
-    vector_store: QdrantVectorStore,
     namespace: str,
     rag_query: str,
     n_docs: int = 5,
     score_threshold: float = 0.5,
+    context_id: str = DEFAULT_CONTEXT_ID,
 ) -> list[Document]:
     """
     Identify relevant documents based on the provided query and namespace.
     Uses direct Qdrant client to ensure all metadata is preserved.
+
+    Args:
+        namespace: The namespace to filter documents by (e.g., party_id)
+        rag_query: The query to search for relevant documents
+        n_docs: The number of documents to return
+        score_threshold: The score threshold for the similarity search
+        context_id: The context identifier (defaults to 'bundestagswahl-2025')
+
+    Returns:
+        A list of relevant documents
     """
+    # Get the vector store for this context
+    vector_store = _get_vector_store_for_context(context_id)
+
     # Get query vector
     query_vector = await embed.aembed_query(rag_query)
 
@@ -119,29 +177,54 @@ async def identify_relevant_docs(
     rag_query: str,
     n_docs: int = 5,
     score_threshold: float = 0.5,
+    context_id: str = DEFAULT_CONTEXT_ID,
 ) -> list[Document]:
+    """Identify relevant documents for a party within a context.
+
+    Args:
+        party: The party to search documents for
+        rag_query: The query to search for relevant documents
+        n_docs: The number of documents to return
+        score_threshold: The score threshold for the similarity search
+        context_id: The context identifier (defaults to 'bundestagswahl-2025')
+
+    Returns:
+        A list of relevant documents
+    """
     return await _identify_relevant_documents(
-        vector_store=qdrant_vector_store,
         namespace=party.party_id,
         rag_query=rag_query,
         n_docs=n_docs,
         score_threshold=score_threshold,
+        context_id=context_id,
     )
 
 
-# relevant docs with reranking
 async def identify_relevant_docs_with_reranking(
     party: Party,
     rag_query: str,
     n_docs: int = 20,
     score_threshold: float = 0.5,
+    context_id: str = DEFAULT_CONTEXT_ID,
 ) -> list[Document]:
+    """Identify relevant documents with reranking for a party within a context.
+
+    Args:
+        party: The party to search documents for
+        rag_query: The query to search for relevant documents
+        n_docs: The number of documents to return
+        score_threshold: The score threshold for the similarity search
+        context_id: The context identifier (defaults to 'bundestagswahl-2025')
+
+    Returns:
+        A list of relevant documents (top 5)
+    """
     relevant_docs = await _identify_relevant_documents(
-        vector_store=qdrant_vector_store,
         namespace=party.party_id,
         rag_query=rag_query,
         n_docs=n_docs,
         score_threshold=score_threshold,
+        context_id=context_id,
     )
 
     # For now, return without external reranking since we're moving away from Pinecone
@@ -156,13 +239,28 @@ async def identify_relevant_docs_with_llm_based_reranking(
     user_message: str,
     n_docs: int = 20,
     score_threshold: float = 0.5,
+    context_id: str = DEFAULT_CONTEXT_ID,
 ) -> list[Document]:
+    """Identify relevant documents with LLM-based reranking for a party within a context.
+
+    Args:
+        party: The party to search documents for
+        rag_query: The query to search for relevant documents
+        chat_history: The chat history for reranking context
+        user_message: The user message for reranking context
+        n_docs: The number of documents to return
+        score_threshold: The score threshold for the similarity search
+        context_id: The context identifier (defaults to 'bundestagswahl-2025')
+
+    Returns:
+        A list of relevant documents (reranked if >= 5 docs)
+    """
     relevant_docs = await _identify_relevant_documents(
-        vector_store=qdrant_vector_store,
         namespace=party.party_id,
         rag_query=rag_query,
         n_docs=n_docs,
         score_threshold=score_threshold,
+        context_id=context_id,
     )
 
     # Note: We lose the score information when using direct Qdrant search
@@ -187,18 +285,40 @@ async def identify_relevant_votes(
     """
     Identify relevant votes based on the provided query.
 
+    Note: Votes are stored in a separate collection and are not context-scoped.
+
     :param rag_query: The query to search for relevant documents.
     :param n_docs: The number of documents to return.
     :param score_threshold: The score threshold for the similarity search.
     :return: A list of relevant documents.
     """
-    return await _identify_relevant_documents(
-        vector_store=voting_behavior_vector_store,
-        namespace="vote_summary",
-        rag_query=rag_query,
-        n_docs=n_docs,
+    # Votes use a separate collection, not context-scoped
+    # Get query vector
+    query_vector = await embed.aembed_query(rag_query)
+
+    filter_condition = Filter(
+        must=[FieldCondition(key="namespace", match=MatchValue(value="vote_summary"))]
+    )
+
+    search_result = qdrant_client.search(
+        collection_name=voting_behavior_vector_store.collection_name,
+        query_vector=("dense", query_vector),
+        limit=n_docs,
+        with_payload=True,
+        query_filter=filter_condition,
         score_threshold=score_threshold,
     )
+
+    documents = []
+    for point in search_result:
+        if point.payload is None:
+            continue
+        content = point.payload.get("text", "")
+        metadata = {k: v for k, v in point.payload.items() if k != "text"}
+        doc = Document(page_content=content, metadata=metadata)
+        documents.append(doc)
+
+    return documents
 
 
 async def identify_relevant_parliamentary_questions(
@@ -209,12 +329,34 @@ async def identify_relevant_parliamentary_questions(
 ) -> list[Document]:
     """
     Identify relevant parliamentary questions based on the provided query and party.
+
+    Note: Parliamentary questions are stored in a separate collection and are not context-scoped.
     """
     namespace = f"{party.party_id if isinstance(party, Party) else party}-parliamentary-questions"
-    return await _identify_relevant_documents(
-        vector_store=parliamentary_questions_vector_store,
-        namespace=namespace,
-        rag_query=rag_query,
-        n_docs=n_docs,
+
+    # Parliamentary questions use a separate collection, not context-scoped
+    query_vector = await embed.aembed_query(rag_query)
+
+    filter_condition = Filter(
+        must=[FieldCondition(key="namespace", match=MatchValue(value=namespace))]
+    )
+
+    search_result = qdrant_client.search(
+        collection_name=parliamentary_questions_vector_store.collection_name,
+        query_vector=("dense", query_vector),
+        limit=n_docs,
+        with_payload=True,
+        query_filter=filter_condition,
         score_threshold=score_threshold,
     )
+
+    documents = []
+    for point in search_result:
+        if point.payload is None:
+            continue
+        content = point.payload.get("text", "")
+        metadata = {k: v for k, v in point.payload.items() if k != "text"}
+        doc = Document(page_content=content, metadata=metadata)
+        documents.append(doc)
+
+    return documents
