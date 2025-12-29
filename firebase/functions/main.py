@@ -45,7 +45,31 @@ _project_id = os.getenv("GCLOUD_PROJECT", os.getenv("GCP_PROJECT", ""))
 
 # Get environment suffix for collection naming
 env_suffix = f"_{ENV.value}" if ENV.value in ["prod", "dev"] else "_dev"
+
+# Legacy collection name for backwards compatibility
 ALL_PARTIES_COLLECTION = f"all_parties{env_suffix}"
+
+# Default context for backwards compatibility
+DEFAULT_CONTEXT_ID = "bundestagswahl-2025"
+
+
+def get_context_collection_name(context_id: str) -> str:
+    """Get the Qdrant collection name for a given context.
+
+    For the default context (bundestagswahl-2025), uses the legacy collection
+    name for backwards compatibility. For other contexts, uses the new
+    context-scoped naming convention.
+
+    Args:
+        context_id: The context identifier (e.g., 'bundestagswahl-2025')
+
+    Returns:
+        The collection name
+    """
+    if context_id == DEFAULT_CONTEXT_ID:
+        return ALL_PARTIES_COLLECTION
+    return f"context_{context_id}{env_suffix}"
+
 
 # Set region based on environment at module load time
 # For prod (project: wahl-chat), use US_EAST1; for dev (project: wahl-chat-dev), use EUROPE_WEST1
@@ -61,15 +85,23 @@ initialize_app()
 def is_party_pdf_for_vector_store(
     event: storage_fn.CloudEvent[storage_fn.StorageObjectData], name: str
 ):
+    """Check if the file is a party PDF that should be added to the vector store.
+
+    Expected path format: public/{context_id}/{party_id}/{filename}
+    Example: public/bundestagswahl-2025/spd/wahlprogramm_2025-01-01.pdf
+    """
     # Make sure the file is in the public subdirectory
     if not name.startswith("public/"):
         logger.info(f"Skipping file as it is not in the public directory: {name}")
         return False
 
-    # Check if the file is in a party's directory
-    if len(name.split("/")) < 3:
+    # Check if the file is in the expected directory structure
+    # Expected: public/{context_id}/{party_id}/{filename} = 4 parts
+    path_parts = name.split("/")
+    if len(path_parts) < 4:
         logger.info(
-            f"Skipping file as it is not in a public subdirectory for a party: {name}"
+            f"Skipping file as it does not match expected path format "
+            f"'public/{{context_id}}/{{party_id}}/{{filename}}': {name}"
         )
         return False
 
@@ -337,20 +369,37 @@ def add_to_collection(splits: list[Document], collection_name: str, namespace: s
 
 
 def add_source_document_to_firebase(
-    document_id: str, party_id: str, source: PartySource
+    document_id: str, context_id: str, party_id: str, source: PartySource
 ):
+    """Add a source document reference to Firestore.
+
+    Args:
+        document_id: The document identifier (filename without extension)
+        context_id: The context identifier (e.g., 'bundestagswahl-2025')
+        party_id: The party identifier (e.g., 'spd')
+        source: The PartySource object with document metadata
+    """
     firestore_client: google.cloud.firestore.Client = firestore.client()
     source_info_ref = firestore_client.collection(
-        f"sources/{party_id}/source_documents"
+        f"sources/{context_id}/{party_id}/source_documents"
     ).document(document_id)
 
     source_info_ref.set(source.model_dump())
 
 
-def delete_source_document_from_firebase(document_id: str, party_id: str):
+def delete_source_document_from_firebase(
+    document_id: str, context_id: str, party_id: str
+):
+    """Delete a source document reference from Firestore.
+
+    Args:
+        document_id: The document identifier (filename without extension)
+        context_id: The context identifier (e.g., 'bundestagswahl-2025')
+        party_id: The party identifier (e.g., 'spd')
+    """
     firestore_client: google.cloud.firestore.Client = firestore.client()
     source_info_ref = firestore_client.collection(
-        f"sources/{party_id}/source_documents"
+        f"sources/{context_id}/{party_id}/source_documents"
     ).document(document_id)
     source_info_ref.delete()
 
@@ -386,6 +435,14 @@ def on_party_document_upload(
     if not is_party_pdf_for_vector_store(event, name):
         return
 
+    # Extract path components: public/{context_id}/{party_id}/{filename}
+    path_parts = name.split("/")
+    context_id = path_parts[1]
+    party_id = path_parts[2]
+    file_name = path_parts[3].replace(".pdf", "")
+
+    logger.info(f"Extracted context_id: {context_id}, party_id: {party_id}")
+
     # Download the document from the storage bucket
     file_path, pdf_blob = download_pdf(bucket_name, name)
 
@@ -395,8 +452,7 @@ def on_party_document_upload(
     # Delete the local file
     os.remove(file_path)
 
-    # Add relevant metadata to the splits
-    file_name = name.split("/")[2].replace(".pdf", "")
+    # Parse the file name for metadata
     file_name_parts = file_name.split("_")
     # Make sure the file name is in the expected format
     if len(file_name_parts) != 2:
@@ -417,8 +473,9 @@ def on_party_document_upload(
     pdf_blob.make_public()
     download_url = pdf_blob.public_url
 
-    # Extract party namespace from the file path
-    party_subdir = name.split("/")[1]
+    # Get the context-scoped collection name
+    collection_name = get_context_collection_name(context_id)
+    logger.info(f"Using collection: {collection_name}")
 
     prefix = build_vector_prefix(name)
     for split in splits:
@@ -461,7 +518,10 @@ def on_party_document_upload(
         split.metadata["source_type"] = "party_document"  # Source category
 
         # Add namespace for filtering/querying
-        split.metadata["namespace"] = party_subdir  # Party subdirectory as namespace
+        split.metadata["namespace"] = party_id  # Party ID as namespace
+
+        # Add context_id to metadata for cross-context queries
+        split.metadata["context_id"] = context_id
 
         # Content enhancement for speeches
         if "rede" in prefix:
@@ -470,12 +530,12 @@ def on_party_document_upload(
         else:
             split.metadata["content_type"] = "document_excerpt"
 
-    # Add the document to the collection with the namespace of the party
-    add_to_collection(splits, ALL_PARTIES_COLLECTION, namespace=party_subdir)
+    # Add the document to the context-scoped collection with the namespace of the party
+    add_to_collection(splits, collection_name, namespace=party_id)
 
     # Add the source information to Firestore
     logger.info(
-        f"Adding source document {document_name} for party {party_subdir} to Firestore"
+        f"Adding source document {document_name} for context {context_id}, party {party_id} to Firestore"
     )
     # create datetime object from string
     source = PartySource(
@@ -483,7 +543,7 @@ def on_party_document_upload(
     )
 
     add_source_document_to_firebase(
-        document_id=file_name, party_id=party_subdir, source=source
+        document_id=file_name, context_id=context_id, party_id=party_id, source=source
     )
     logger.info("Added source information to Firestore")
 
@@ -508,13 +568,19 @@ def on_party_document_deleted(
     if not is_party_pdf_for_vector_store(event, name):
         return
 
-    # Extract the namespace from the file path
-    party_subdir = name.split("/")[1]
+    # Extract path components: public/{context_id}/{party_id}/{filename}
+    path_parts = name.split("/")
+    context_id = path_parts[1]
+    party_id = path_parts[2]
+    file_name = path_parts[3].replace(".pdf", "")
+
+    logger.info(f"Extracted context_id: {context_id}, party_id: {party_id}")
 
     # Delete source document from Firestore
-    file_name = name.split("/")[2].replace(".pdf", "")
     logger.info(f"Deleting source document {file_name} from Firestore")
-    delete_source_document_from_firebase(document_id=file_name, party_id=party_subdir)
+    delete_source_document_from_firebase(
+        document_id=file_name, context_id=context_id, party_id=party_id
+    )
     logger.info(f"Deleted source document {file_name} from Firestore")
 
     # Initialize Qdrant client
@@ -524,8 +590,10 @@ def on_party_document_deleted(
         timeout=120,  # Increase timeout to 120 seconds
     )
 
-    # Define the collection name
-    collection_name = ALL_PARTIES_COLLECTION
+    # Get the context-scoped collection name
+    collection_name = get_context_collection_name(context_id)
+    logger.info(f"Using collection: {collection_name}")
+
     existing_collections = [
         col.name for col in qdrant_client.get_collections().collections
     ]
@@ -561,7 +629,7 @@ def on_party_document_deleted(
     prefix = f"{build_vector_prefix(name)}#"
 
     logger.info(
-        f"Deleting splits from collection {collection_name} with namespace {party_subdir} and prefix {prefix}"
+        f"Deleting splits from collection {collection_name} with namespace {party_id} and prefix {prefix}"
     )
 
     # In Qdrant, we need to use filters to find and delete documents
@@ -570,13 +638,13 @@ def on_party_document_deleted(
 
     filter_condition = Filter(
         must=[
-            FieldCondition(key="namespace", match=MatchValue(value=party_subdir)),
+            FieldCondition(key="namespace", match=MatchValue(value=party_id)),
             FieldCondition(key="source_document", match=MatchValue(value=name)),
         ]
     )
 
     logger.info(
-        f"Searching for documents to delete with filter: namespace={party_subdir}, source_document={name}"
+        f"Searching for documents to delete with filter: namespace={party_id}, source_document={name}"
     )
 
     # Search for documents to delete using scroll to get all matching points
@@ -668,5 +736,5 @@ def on_party_document_deleted(
         raise e
 
     logger.info(
-        f"Deleted splits from collection {collection_name} with namespace {party_subdir}"
+        f"Deleted splits from collection {collection_name} with namespace {party_id}"
     )
