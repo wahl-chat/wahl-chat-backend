@@ -15,13 +15,11 @@ load_env()
 
 logger = logging.getLogger(__name__)
 
-
 CAPACITY_GEMINI_2_FLASH = 108
 CAPACITY_GPT_4O_OPENAI_TIER_5 = 3759
 CAPACITY_GPT_4O_AZURE = 112
 CAPACITY_GPT_4O_MINI_OPENAI_TIER_5 = 4054
 CAPACITY_GPT_4O_MINI_AZURE = 108
-
 
 azure_gpt_4o = AzureChatOpenAI(
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -62,7 +60,7 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         name="google-gemini-2.0-flash",
         model=google_gemini_2_flash,
         sizes=[LLMSize.SMALL, LLMSize.LARGE],
-        priority=50,  # Temporarily lowered for debugging (was 100)
+        priority=100,
         user_capacity_per_minute=CAPACITY_GEMINI_2_FLASH,
         is_at_rate_limit=False,
     ),
@@ -79,7 +77,7 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         name="openai-gpt-4o",
         model=openai_gpt_4o,
         sizes=[LLMSize.LARGE],
-        priority=110,  # Temporarily raised for debugging (was 98)
+        priority=98,
         user_capacity_per_minute=CAPACITY_GPT_4O_OPENAI_TIER_5,
         is_at_rate_limit=False,
         premium_only=False,
@@ -88,7 +86,7 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         name="azure-gpt-4o-mini",
         model=azure_gpt_4o_mini,
         sizes=[LLMSize.SMALL],
-        priority=80,  # Temporarily raised for debugging (was 50)
+        priority=50,
         user_capacity_per_minute=CAPACITY_GPT_4O_MINI_AZURE,
         is_at_rate_limit=False,
     ),
@@ -96,7 +94,7 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         name="openai-gpt-4o-mini",
         model=openai_gpt_4o_mini,
         sizes=[LLMSize.SMALL],
-        priority=100,  # Temporarily raised for debugging (was 40)
+        priority=40,
         user_capacity_per_minute=CAPACITY_GPT_4O_MINI_OPENAI_TIER_5,
         is_at_rate_limit=False,
     ),
@@ -117,7 +115,6 @@ google_gemini_2_flash_det = ChatGoogleGenerativeAI(
     temperature=0.0,
     max_retries=0,
 )
-
 
 openai_gpt_4o_mini_det = ChatOpenAI(
     model="gpt-4o-mini",
@@ -147,7 +144,7 @@ DETERMINISTIC_LLMS: list[LLM] = [
         name="openai-gpt-4o-mini-det",
         model=openai_gpt_4o_mini_det,
         sizes=[LLMSize.SMALL],
-        priority=110,  # Temporarily raised for debugging (was 80)
+        priority=80,
         user_capacity_per_minute=CAPACITY_GPT_4O_MINI_OPENAI_TIER_5,
         is_at_rate_limit=False,
     ),
