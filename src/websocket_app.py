@@ -17,11 +17,7 @@ from src.chatbot_async import (
     generate_chat_summary,
     generate_party_vote_behavior_summary,
 )
-from src.firebase_service import (
-    aget_party_by_id,
-    aupdate_voice_transcription,
-    aupdate_voice_transcription_error,
-)
+from src.firebase_service import aget_party_by_id
 from src.models.chat import GroupChatSession, Message, Role
 from src.models.dtos import (
     ChatResponseCompleteDto,
@@ -284,16 +280,8 @@ async def chat_answer_request(sid: str, body: dict):
                 language=chat_message_data.language,
             )
 
-            # Update Firebase and emit transcription only if grouped_message_id is provided
+            # Emit the transcription to the client if grouped_message_id is provided
             if chat_message_data.grouped_message_id:
-                await aupdate_voice_transcription(
-                    session_id=chat_message_data.session_id,
-                    grouped_message_id=chat_message_data.grouped_message_id,
-                    message_id=chat_message_data.id,
-                    transcribed_text=transcribed_text,
-                )
-
-                # Emit the transcription to the client
                 transcribed_dto = VoiceTranscribedDto(
                     session_id=chat_message_data.session_id,
                     grouped_message_id=chat_message_data.grouped_message_id,
@@ -311,11 +299,6 @@ async def chat_answer_request(sid: str, body: dict):
             logger.error(
                 f"Error transcribing audio for client {sid}: {e}", exc_info=True
             )
-            await aupdate_voice_transcription_error(
-                session_id=chat_message_data.session_id,
-                message_id=chat_message_data.id,
-                error_message=f"Fehler bei der Spracherkennung: {e}",
-            )
             chat_response_complete_dto = ChatResponseCompleteDto(
                 session_id=chat_message_data.session_id,
                 status=Status(
@@ -332,11 +315,6 @@ async def chat_answer_request(sid: str, body: dict):
         except Exception as e:
             logger.error(
                 f"Error processing voice message for client {sid}: {e}", exc_info=True
-            )
-            await aupdate_voice_transcription_error(
-                session_id=chat_message_data.session_id,
-                message_id=chat_message_data.id,
-                error_message="Es ist ein Fehler bei der Verarbeitung der Sprachnachricht aufgetreten.",
             )
             chat_response_complete_dto = ChatResponseCompleteDto(
                 session_id=chat_message_data.session_id,
@@ -446,7 +424,7 @@ async def handle_text_to_speech(sid: str, body: dict):
             audio_base64="",
             status=Status(
                 indicator=StatusIndicator.ERROR,
-                message=f"Fehler bei der Sprachsynthese: {e}",
+                message=f"Error synthesizing text to speech: {e}",
             ),
         )
         await sio.emit("text_to_speech_complete", response_dto.model_dump(), to=sid)
@@ -461,7 +439,7 @@ async def handle_text_to_speech(sid: str, body: dict):
             audio_base64="",
             status=Status(
                 indicator=StatusIndicator.ERROR,
-                message="Es ist ein Fehler bei der Sprachsynthese aufgetreten.",
+                message=f"Error generating text to speech: {e}",
             ),
         )
         await sio.emit("text_to_speech_complete", response_dto.model_dump(), to=sid)
