@@ -129,8 +129,26 @@ Replace hardcoded "Bundestagswahl 2025" references with context metadata:
 
 ## Document Storage Changes
 
-- Nest in public/{context_id}/{context_party_id}
-- Parse context_id in function and
+**Current structure:** `public/{party_id}/{filename}`
+**New structure:** `public/{context_id}/{party_id}/{filename}`
+
+### Firebase Function Updates Required
+
+The Cloud Functions in `firebase/functions/main.py` need to be updated:
+
+1. **`is_party_pdf_for_vector_store()`** - Update path validation:
+   - Change from 3 parts (`public/{party_id}/{filename}`) to 4 parts (`public/{context_id}/{party_id}/{filename}`)
+
+2. **`on_party_document_upload()`** - Update path parsing:
+   - Extract `context_id` from `name.split("/")[1]`
+   - Extract `party_id` from `name.split("/")[2]`
+   - Extract `filename` from `name.split("/")[3]`
+   - Use context-scoped collection: `context_{context_id}_{env}` instead of `all_parties_{env}`
+   - Update Firestore path: `sources/{context_id}/{party_id}/source_documents`
+
+3. **`on_party_document_deleted()`** - Same path parsing updates
+
+4. **`add_source_document_to_firebase()` / `delete_source_document_from_firebase()`** - Add `context_id` parameter
 
 ## Admin API (follow-up PRs)
 
@@ -233,6 +251,17 @@ Existing party methods remain unchanged.
 - Replace hardcoded "Bundestagswahl 2025" → `{context_name}`
 - Replace hardcoded date → `{context_date}`
 - Add helper: `build_prompt_context(context: Context) -> dict`
+
+---
+
+#### PR 2.3: Firebase Functions - Context-Scoped Storage
+**Files:** `firebase/functions/main.py`, `firebase/functions/models.py`
+
+- Update path validation: `public/{context_id}/{party_id}/{filename}` (4 parts)
+- Extract `context_id` and `party_id` from storage path
+- Use context-scoped Qdrant collection: `context_{context_id}_{env}`
+- Update Firestore paths: `sources/{context_id}/{party_id}/source_documents`
+- Add `context_id` parameter to `add_source_document_to_firebase()` / `delete_source_document_from_firebase()`
 
 ---
 
@@ -346,6 +375,7 @@ Phase 1 (can be merged independently):
 Phase 2:   │
   PR 2.1 ──┤
   PR 2.2 ──┤
+  PR 2.3 ──┤
            │
 Phase 3:   │
   PR 3.1 ──┼── PR 3.2
