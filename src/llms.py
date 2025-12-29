@@ -39,7 +39,7 @@ google_gemini_2_flash = ChatGoogleGenerativeAI(
 )
 
 google_gemini_3_flash_preview = ChatGoogleGenerativeAI(
-    model="gemini-3.0-flash-preview",
+    model="gemini-3-flash-preview",
     api_key=safe_load_api_key("GOOGLE_API_KEY"),
     max_retries=0,
 )
