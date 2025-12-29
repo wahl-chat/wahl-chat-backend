@@ -4,6 +4,8 @@ from langchain.prompts import (
     PromptTemplate,
 )
 
+from src.models.context import Context
+
 
 def get_chat_answer_guidelines(party_name: str, is_comparing: bool = False):
     if not is_comparing:
@@ -168,7 +170,7 @@ Du schreibst Queries für ein RAG System basierend auf dem bisherigen Konversati
 
 # Hintergrundinformationen
 Die Queries werden zur Suche von relevanten Dokumenten in einem Vector Store verwendet, um die Antwort auf die Nutzerfrage zu verbessern.
-Der Vector Store enthält Dokumente mit Informationen zur Bundestagswahl 2025, zum Wahlsystem und zur Anwendung wahl.chat. wahl.chat ist ein KI-Tool, das es ermöglicht sich interaktiv und zeitgemäß über die Positionen und Pläne der Parteien zu informieren.
+Der Vector Store enthält Dokumente mit Informationen zur {context_name}, zum Wahlsystem und zur Anwendung wahl.chat. wahl.chat ist ein KI-Tool, das es ermöglicht sich interaktiv und zeitgemäß über die Positionen und Pläne der Parteien zu informieren.
 Relevante Informationen werden basierend auf der Ähnlichkeit der Dokumente zu den bereitgestellten Queries gefunden. Deine Query muss daher inhaltlich zu den Dokumenten passen, die du finden möchtest.
 
 # Deine Handlungsanweisungen
@@ -586,12 +588,11 @@ user_prompt_improvement_rag_template_vote_behavior_summary = (
 
 wahl_chat_response_system_prompt_template_str = """
 # Rolle
-Du bist der wahl.chat Assistent. Du gibst Bürger:innen Informationen zur Bundestagswahl 2025, zum Wahlsystem und zur Anwendung wahl.chat.
+Du bist der wahl.chat Assistent. Du gibst Bürger:innen Informationen zu Politik, zum Wahlsystem und zur Anwendung wahl.chat.
 
 # Hintergrundinformationen
-## Hat stattgefunden am Bundestagswahl 2025
-Termin: Hat stattgefunden am 23. Februar 2025
-URL für weitere Informationen zur Wahl: https://www.zdf.de/nachrichten/politik/deutschland/bundestagswahl-termin-kandidaten-umfrage-100.html
+## Aktueller Kontext: {context_name}
+{context_date_info}
 
 ## Parteien, zu denen wahl.chat Fragen beantworten kann
 {all_parties_list}
@@ -608,7 +609,7 @@ Generiere basierend auf den bereitgestellten Hintergrundinformationen und Leitli
 
 ## Leitlinien für deine Antwort
 1. **Quellenbasiertheit**
-    - Beziehe dich für Antworten zu Fragen zur Bundestagswahl, zum Wahlsystem und zu wahl.chat ausschließlich auf die bereitgestellten Hintergrundinformationen.
+    - Beziehe dich für Antworten zu Fragen zum aktuellen Kontext, zum Wahlsystem und zu wahl.chat ausschließlich auf die bereitgestellten Hintergrundinformationen.
     - Fokussiere dich auf die relevanten Informationen aus den bereitgestellten Ausschnitten.
     - Allgemeine Fragen, die mit der Wahl zu tun haben kannst du auch basierend auf deinem eigenen Wissen beantworten. Beachte, dass dein eigenes Wissen nur bis Oktober 2023 reicht.
 2. **Strikte Neutralität**
@@ -692,16 +693,15 @@ reranking_user_prompt_template = PromptTemplate.from_template(
 
 swiper_assistant_system_prompt_template_str = """
 # Rolle
-Du bist ein KI-Assistent, der in den wahl.chat Swiper, eine KI-gestützte Wahl-O-Mat Alternative, integriert ist. Du beantwortest Fragen zur Politik in Deutschland und zur vergangenen Bundestagswahl 2025.
+Du bist ein KI-Assistent, der in den wahl.chat Swiper, eine KI-gestützte Wahl-O-Mat Alternative, integriert ist. Du beantwortest Fragen zur Politik in Deutschland.
 
 # Hintergrundinformationen
 ## wahl.chat Swiper
 wahl.chat Swiper ist eine KI-gestützte Alternative zum klassischen Wahl-O-Mat. Nutzer:innen beantworten dabei zu verschiedenen politischen Themen, ob sie den Aussagen zustimmen oder nicht. Am Ende erhalten sie eine Übersicht, welche Partei am besten zu ihren politischen Ansichten passt.
 Zusätzlich können die Nutzer:innen dir Fragen stellen, um eine besser informierte Entscheidung über die Zustimmung oder Ablehnung zu den Fragen im wahl.chat Swiper zu treffen.
 
-## Bundestagswahl 2025
-Termin: Hat stattgefunden am 23. Februar 2025
-URL für weitere Informationen zur Wahl: https://www.zdf.de/nachrichten/politik/deutschland/bundestagswahl-termin-kandidaten-umfrage-100.html
+## Aktueller Kontext: {context_name}
+{context_date_info}
 
 ## Aktuelle Informationen
 Datum: {date}
@@ -814,3 +814,68 @@ generate_swiper_assistant_title_and_quick_replies_user_prompt_str = """
 
 ## Deine Quick Replies auf Deutsch
 """
+
+
+# =============================================================================
+# Context-aware prompt helpers
+# =============================================================================
+
+
+def build_prompt_context(context: Context) -> dict[str, str]:
+    """Build a dictionary of prompt variables from a Context object.
+
+    This helper function extracts the relevant information from a Context
+    and formats it for use in prompt templates.
+
+    Args:
+        context: The Context object to extract information from
+
+    Returns:
+        A dictionary with the following keys:
+        - context_name: The display name of the context (e.g., "Bundestagswahl 2025")
+        - context_date: Formatted date string or "Kein Datum" if not set
+        - context_date_info: Full date information for prompts
+        - context_type: "election" or "general"
+        - context_id: The context identifier
+    """
+
+    # Format the date if available
+    if context.date:
+        # Format as German date: "23. Februar 2025"
+        months_de = {
+            1: "Januar",
+            2: "Februar",
+            3: "März",
+            4: "April",
+            5: "Mai",
+            6: "Juni",
+            7: "Juli",
+            8: "August",
+            9: "September",
+            10: "Oktober",
+            11: "November",
+            12: "Dezember",
+        }
+        date_formatted = (
+            f"{context.date.day}. {months_de[context.date.month]} {context.date.year}"
+        )
+
+        # Determine if the date is in the past or future
+        from datetime import date as date_type
+
+        today = date_type.today()
+        if context.date < today:
+            date_info = f"Hat stattgefunden am {date_formatted}"
+        else:
+            date_info = f"Findet statt am {date_formatted}"
+    else:
+        date_formatted = "Kein Datum"
+        date_info = "Kein spezifisches Datum"
+
+    return {
+        "context_name": context.name,
+        "context_date": date_formatted,
+        "context_date_info": date_info,
+        "context_type": context.type.value,
+        "context_id": context.context_id,
+    }
