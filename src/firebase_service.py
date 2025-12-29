@@ -7,6 +7,7 @@ from firebase_admin import firestore, credentials, firestore_async
 from pathlib import Path
 
 from src.models.chat import CachedResponse
+from src.models.context import Context, ContextParty
 from src.models.party import Party
 from src.utils import load_env
 
@@ -72,3 +73,56 @@ async def awrite_cached_answer_for_party(
 async def awrite_llm_status(is_at_rate_limit: bool) -> None:
     llm_status_ref = async_db.collection("system_status").document("llm_status")
     await llm_status_ref.set({"is_at_rate_limit": is_at_rate_limit})
+
+
+# =============================================================================
+# Context Methods
+# =============================================================================
+
+
+async def aget_contexts() -> list[Context]:
+    """Get all contexts."""
+    contexts = async_db.collection("contexts").stream()
+    return [Context(**context.to_dict()) async for context in contexts]
+
+
+async def aget_context_by_id(context_id: str) -> Context | None:
+    """Get a context by its ID."""
+    context_ref = async_db.collection("contexts").document(context_id)
+    context = await context_ref.get()
+    if context.exists:
+        return Context(**context.to_dict())
+    return None
+
+
+async def aget_default_context() -> Context | None:
+    """Get the default context (is_default=True)."""
+    contexts = (
+        async_db.collection("contexts")
+        .where("is_default", "==", True)
+        .limit(1)
+        .stream()
+    )
+    async for context in contexts:
+        return Context(**context.to_dict())
+    return None
+
+
+async def aget_context_parties(context_id: str) -> list[ContextParty]:
+    """Get all parties for a given context."""
+    parties = (
+        async_db.collection("context_parties")
+        .where("context_id", "==", context_id)
+        .stream()
+    )
+    return [ContextParty(**party.to_dict()) async for party in parties]
+
+
+async def aget_context_party(context_id: str, party_id: str) -> ContextParty | None:
+    """Get a specific party within a context."""
+    context_party_id = ContextParty.build_id(context_id, party_id)
+    party_ref = async_db.collection("context_parties").document(context_party_id)
+    party = await party_ref.get()
+    if party.exists:
+        return ContextParty(**party.to_dict())
+    return None
