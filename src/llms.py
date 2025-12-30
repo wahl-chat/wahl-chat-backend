@@ -15,13 +15,11 @@ load_env()
 
 logger = logging.getLogger(__name__)
 
-
 CAPACITY_GEMINI_2_FLASH = 108
 CAPACITY_GPT_4O_OPENAI_TIER_5 = 3759
 CAPACITY_GPT_4O_AZURE = 112
 CAPACITY_GPT_4O_MINI_OPENAI_TIER_5 = 4054
 CAPACITY_GPT_4O_MINI_AZURE = 108
-
 
 azure_gpt_4o = AzureChatOpenAI(
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -117,7 +115,6 @@ google_gemini_2_flash_det = ChatGoogleGenerativeAI(
     temperature=0.0,
     max_retries=0,
 )
-
 
 openai_gpt_4o_mini_det = ChatOpenAI(
     model="gpt-4o-mini",
