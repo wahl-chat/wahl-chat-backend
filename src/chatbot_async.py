@@ -33,6 +33,8 @@ from src.utils import (
 )
 from src.prompts import (
     get_chat_answer_guidelines,
+    get_wahl_chat_answer_guidelines,
+    get_swiper_answer_guidelines,
     get_quick_reply_guidelines,
     party_response_system_prompt_template,
     streaming_party_response_user_prompt_template,
@@ -414,24 +416,25 @@ async def generate_streaming_chatbot_response(
 
     now = datetime.now()
 
-    answer_guidelines = get_chat_answer_guidelines(party.name, is_comparing=False)
-
     if party.party_id == WAHL_CHAT_PARTY.party_id:
+        answer_guidelines = get_wahl_chat_answer_guidelines()
         all_parties_list = ""
-        for party in all_parties:
-            all_parties_list += f"### {party.long_name}\n"
-            all_parties_list += f"Abkürzung: {party.name}\n"
-            all_parties_list += f"Beschreibung: {party}\n"
+        for p in all_parties:
+            all_parties_list += f"### {p.long_name}\n"
+            all_parties_list += f"Abkürzung: {p.name}\n"
+            all_parties_list += f"Beschreibung: {p}\n"
             all_parties_list += (
-                f"Spitzenkandidat*In für die Bundestagswahl 2025: {party.candidate}\n"
+                f"Spitzenkandidat*In für die Bundestagswahl 2025: {p.candidate}\n"
             )
         system_prompt = wahl_chat_response_system_prompt_template.format(
             all_parties_list=all_parties_list,
             date=now.strftime("%Y-%m-%d"),
             time=now.strftime("%H:%M"),
             rag_context=rag_context,
+            answer_guidelines=answer_guidelines,
         )
     else:
+        answer_guidelines = get_chat_answer_guidelines(party.name, is_comparing=False)
         system_prompt = party_response_system_prompt_template.format(
             party_name=party.name,
             party_long_name=party.long_name,
@@ -659,9 +662,11 @@ async def generate_swiper_assistant_response(
     chat_response_llm_size: LLMSize,
 ) -> Message:
     now = datetime.now()
+    answer_guidelines = get_swiper_answer_guidelines()
     system_prompt = swiper_assistant_system_prompt_template.format(
         date=now.strftime("%Y-%m-%d"),
         time=now.strftime("%H:%M"),
+        answer_guidelines=answer_guidelines,
     )
 
     user_prompt = swiper_assistant_user_prompt_template.format(
