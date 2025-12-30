@@ -9,7 +9,12 @@ def get_base_guidelines(
     source_instructions: str,
     knowledge_cutoff: str = "Januar 2025",
     additional_boundaries: str = "",
+    additional_style_instructions: str = "",
 ):
+    style_section = f"""    - Beantworte Fragen quellenbasiert, konkret und leicht verständlich.
+    - Gib genaue Zahlen und Daten an, wenn diese in den bereitgestellten Ausschnitten vorhanden sind.
+    - Spreche Nutzer:innen mit Du an.
+    {additional_style_instructions}"""
     return f"""
 ## Leitlinien für deine Antwort
 1. **Quellenbasiertheit**
@@ -26,9 +31,7 @@ def get_base_guidelines(
     - Unterscheide zwischen Fakten und Interpretationen.
     - Kennzeichne Antworten, die auf deinem eigenen Wissen basieren und nicht auf den bereitgestellten Materialien der Partei klar. Formatiere solche Antworten in _kursiv_ und gib keine Quellen an.
 4. **Antwortstil**
-    - Beantworte Fragen quellenbasiert, konkret und leicht verständlich.
-    - Gib genaue Zahlen und Daten an, wenn diese in den bereitgestellten Ausschnitten vorhanden sind.
-    - Spreche Nutzer:innen mit Du an.
+{style_section}
     - Zitierstil:
         - Gib nach jedem Satz eine Liste der Integer-IDs der Quellen an, die du für die Generierung dieses Satzes verwendet hast. Die Liste muss von eckigen Klammern [] umschlossen sein. Beispiel: [id] für eine Quelle oder [id1, id2, ...] für mehrere Quellen.
         - Falls du für einen Satz keine der Quellen verwendet hast, gib nach diesem Satz keine Quellen an und formatiere den Satz stattdessen _kursiv_.
@@ -37,7 +40,7 @@ def get_base_guidelines(
         - Antworte im Markdown-Format.
         - Nutze Überschriften (##, ###, etc.), Umbrüche, Absätze und Listen, um deine Antwort klar und übersichtlich zu strukturieren. Umbrüche kannst du in Markdown mit `  \n` nach der Quellenangabe einfügen (beachte den notwendigen Zeilenumbruch).
         - Nutze Stichpunkte, um deine Antworten übersichtlich zu gliedern.
-        - Hebe die wichtigsten Schlagwörter und Informationen **fett** hervor.
+        - Hebe die wichtigsten Schlagwörter and Informationen **fett** hervor.
         - Beende Antworten, die mehr als 6 Sätze lang sind, mit einem sehr kurzen und prägnanten Fazit.
     - Antwortlänge:
         - Halte deine Antwort kurz und prägnant.
@@ -86,6 +89,21 @@ def get_swiper_answer_guidelines():
     source_instructions = "    - Beziehe dich für deine Antwort, wenn möglich auf die recherchierten Quellen."
 
     return get_base_guidelines(source_instructions=source_instructions)
+
+
+def get_party_vote_behavior_summary_guidelines():
+    source_instructions = """    - Antworte nur anhand der bereitgestellten Abstimmungsdaten.
+    - Stelle sicher, dass du keine Vermutungen oder Ergänzungen hinzufügst, die nicht in den Abstimmungsdaten stehen.
+    - Gebe die Begründung der Partei nur an, falls diese Begründung in den Abstimmungsdaten enthalten ist."""
+
+    additional_style_instructions = (
+        "- Nutze das gängige deutsche Datenformat (Tag. Monat Jahr) für Datumsangaben."
+    )
+
+    return get_base_guidelines(
+        source_instructions=source_instructions,
+        additional_style_instructions=additional_style_instructions,
+    )
 
 
 party_response_system_prompt_template_str = """
@@ -501,33 +519,10 @@ Du erhältst eine Nutzer-Nachricht, und eine Antwort, die ein Chatbot auf Basis 
 Analysiere basierend auf den bereitgestellten Abstimmungsdaten, wie die Partei {party_name} in den vergangenen Bundestagsabstimmungen zu dem Thema abgestimmt hat.
 Falls du in den Abstimmungsdaten eine Begründung der Partei für die Entscheidung der Partei findest, gebe ihre Begründung kurz in deiner Antwort an. Falls du keine Begründung findest, lasse die Begründung einfach weg.
 
-## Leitlinien für deine Antwort:
-1. **Quellenbasiertheit**
-    - Antworte nur anhand der bereitgestellten Abstimmungsdaten.
-    - Stelle sicher, dass du keine Vermutungen oder Ergänzungen hinzufügst, die nicht in den Abstimmungsdaten stehen.
-    - Nenne, wenn möglich, genaue Zahlen und Daten, um deine Argumente zu untermauern.
-    - Gebe die Begründung der Partei nur an, falls diese Begründung in den Abstimmungsdaten enthalten ist.
-2. **Strikte Neutralität**
-    - Vermeide jede Form von Wertung oder politische Empfehlung.
-    - Vermeide wertende Adjektive und Formulierungen.
-    - Gib KEINE Wahlempfehlungen.
-3. **Transparenz**
-    - Kennzeichne, wenn du etwas **nicht weißt** oder wenn es Unklarheiten gibt.
-    - Trenne klar zwischen **faktischen Inhalten** (direkt aus den Abstimmungsdaten) und eventuellen **Interpretationen**.
-4. **Antwortstil**
-    - Formuliere deine Einordnung sehr knapp, sachlich und leicht verständlich in deutscher Sprache.
-    - Nutze das gängige deutsche Datenformat (Tag. Monat Jahr) für Datumsangaben.
-    - Antwortformat:
-        - Antworte im Markdown-Format.
-        - Nutze das Markdown-Format (Hervorhebungen, Listen, etc.), um deine Antwort übersichtlich zu strukturieren.
-        - Hebe die wichtigsten Schlagwörter und Informationen fett hervor.
-    - Zitierstil:
-        - Gib nach jedem Satz eine Liste der Integer-IDs der Quellen an, die du für die Generierung dieses Satzes verwendet hast. Die Liste muss von eckigen Klammern [] umschlossen sein. Beispiel: [id] für eine Quelle oder [id1, id2, ...] für mehrere Quellen.
-        - Falls du für einen Satz keine der Quellen verwendet hast, gib nach diesem Satz keine Quellen an und formatiere den Satz stattdessen kursiv
-    - Sprache:
-        - Antworte ausschließlich auf Deutsch.
-        - Nutze nur leicht verständliches Deutsch und erkläre Fachbegriffe kurz.
-5. **Format deiner Antwort**
+{answer_guidelines}
+
+## Format deiner Antwort
+"
 ## Abstimmungsverhalten
 <sehr kurze Einleitung in einem Satz, zu welchem Thema das Abstimmverhalten der Partei analysiert wird>
 
@@ -536,6 +531,7 @@ Falls du in den Abstimmungsdaten eine Begründung der Partei für die Entscheidu
 
 ## Fazit
 <Gesamttendenz im Abstimmungsverhalten der Partei zum Thema - 1-3 Sätze, sachlich, ohne Wertung>
+"
 """
 
 generate_party_vote_behavior_summary_system_prompt = PromptTemplate.from_template(

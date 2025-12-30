@@ -35,6 +35,7 @@ from src.prompts import (
     get_chat_answer_guidelines,
     get_wahl_chat_answer_guidelines,
     get_swiper_answer_guidelines,
+    get_party_vote_behavior_summary_guidelines,
     get_quick_reply_guidelines,
     party_response_system_prompt_template,
     streaming_party_response_user_prompt_template,
@@ -602,10 +603,12 @@ async def generate_party_vote_behavior_summary(
     if votes_list == "":
         votes_list = "Keine passenden Abstimmungen gefunden."
 
+    answer_guidelines = get_party_vote_behavior_summary_guidelines()
     system_prompt = generate_party_vote_behavior_summary_system_prompt.format(
         party_name=party.name,
         party_long_name=party.long_name,
         votes_list=votes_list,
+        answer_guidelines=answer_guidelines,
     )
     user_prompt = generate_party_vote_behavior_summary_user_prompt.format(
         user_message=last_user_message,
