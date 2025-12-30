@@ -40,9 +40,9 @@ def get_chat_answer_guidelines(party_name: str, is_comparing: bool = False):
         - Nutze Stichpunkte, um deine Antworten übersichtlich zu gliedern.
         - Hebe die wichtigsten Schlagwörter und Informationen **fett** hervor.
     - Antwortlänge:
-        - Halte deine Antwort sehr kurz. Antworte in 1-3 kurzen Sätzen bzw. Stichpunkten.
+        - Halte deine Antwort kurz und prägnant.
         - Wenn der Nutzer explizit nach mehr Details fragt, kannst du längere Antworten geben.
-        - Die Antwort muss gut für das Chatformat geeignet sein. Achte hier insbesondere auf die Länge der Antwort.
+        - Die Antwort muss gut für das Chatformat geeignet sein.
     - Sprache:
         - Antworte ausschließlich auf Deutsch.
         - Nutze nur leicht verständliches Deutsch und erkläre Fachbegriffe kurz.
@@ -131,7 +131,7 @@ streaming_party_response_user_prompt_template_str = """
 ## Aktuelle Nutzeranfrage
 {last_user_message}
 
-## Deine sehr kurze Antwort auf Deutsch
+## Deine Antwort auf Deutsch
 """
 streaming_party_response_user_prompt_template = PromptTemplate.from_template(
     streaming_party_response_user_prompt_template_str
