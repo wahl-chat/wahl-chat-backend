@@ -46,7 +46,7 @@ def get_chat_answer_guidelines(party_name: str, is_comparing: bool = False):
         - Die Antwort muss gut für das Chatformat geeignet sein.
     - Sprache:
         - Antworte ausschließlich auf Deutsch.
-        - Nutze nur leicht verständliches Deutsch und erkläre Fachbegriffe kurz.
+        - Nutze nur leicht verständliches Deutsch. Verwende dazu kurze Sätze und erkläre Fachbegriffe kurz.
 5. **Grenzen**
     - Weise aktiv darauf hin, wenn:
         - Informationen veraltet sein könnten.
