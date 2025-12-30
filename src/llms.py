@@ -63,7 +63,7 @@ openai_gpt_4o_mini = ChatOpenAI(
     max_retries=0,
 )
 
-NON_DETERMINISTIC_LLMS: list[LLM] = [
+RESPONSE_GENERATION_LLMS: list[LLM] = [
     LLM(
         name="google-gemini-3.0-flash-preview",
         model=google_gemini_3_flash_preview,
@@ -148,7 +148,7 @@ openai_gpt_4o_mini_det = ChatOpenAI(
     max_retries=0,
 )
 
-DETERMINISTIC_LLMS: list[LLM] = [
+PRE_AND_POST_PROCESSING_LLMS: list[LLM] = [
     LLM(
         name="google-gemini-2.5-flash-lite-preview-09-2025",
         model=google_gemini_2_5_flash_lite_preview_det,

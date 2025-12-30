@@ -17,8 +17,8 @@ from openai.types.chat.chat_completion_message_param import (
 
 from src.models.general import LLM, LLMSize
 from src.llms import (
-    DETERMINISTIC_LLMS,
-    NON_DETERMINISTIC_LLMS,
+    PRE_AND_POST_PROCESSING_LLMS,
+    RESPONSE_GENERATION_LLMS,
     get_answer_from_llms,
     get_structured_output_from_llms,
     stream_answer_from_llms,
@@ -78,21 +78,23 @@ load_env()
 logger = logging.getLogger(__name__)
 
 
-chat_response_llms: list[LLM] = NON_DETERMINISTIC_LLMS
+chat_response_llms: list[LLM] = RESPONSE_GENERATION_LLMS
 
-voting_behavior_summary_llms: list[LLM] = NON_DETERMINISTIC_LLMS
+voting_behavior_summary_llms: list[LLM] = RESPONSE_GENERATION_LLMS
 
-prompt_improvement_llms: list[LLM] = DETERMINISTIC_LLMS
+prompt_improvement_llms: list[LLM] = PRE_AND_POST_PROCESSING_LLMS
 
-generate_party_list_llms: list[LLM] = DETERMINISTIC_LLMS
+generate_party_list_llms: list[LLM] = PRE_AND_POST_PROCESSING_LLMS
 
-generate_message_type_and_general_question_llms: list[LLM] = DETERMINISTIC_LLMS
+generate_message_type_and_general_question_llms: list[LLM] = (
+    PRE_AND_POST_PROCESSING_LLMS
+)
 
-generate_chat_summary_llms: list[LLM] = DETERMINISTIC_LLMS
+generate_chat_summary_llms: list[LLM] = PRE_AND_POST_PROCESSING_LLMS
 
-generate_chat_title_and_quick_replies_llms: list[LLM] = DETERMINISTIC_LLMS
+generate_chat_title_and_quick_replies_llms: list[LLM] = PRE_AND_POST_PROCESSING_LLMS
 
-reranking_llms = DETERMINISTIC_LLMS
+reranking_llms = PRE_AND_POST_PROCESSING_LLMS
 
 perplexity_client = AsyncOpenAI(
     api_key=os.getenv("PERPLEXITY_API_KEY"), base_url="https://api.perplexity.ai"
