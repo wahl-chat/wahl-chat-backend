@@ -42,6 +42,7 @@ google_gemini_3_flash_preview = ChatGoogleGenerativeAI(
     model="gemini-3-flash-preview",
     api_key=safe_load_api_key("GOOGLE_API_KEY"),
     max_retries=0,
+    temperature=1.0,  # Explicitly set temperature to 1.0 based on Google's recommendation in https://ai.google.dev/gemini-api/docs/gemini-3#temperature
 )
 
 google_gemini_2_5_flash_preview = ChatGoogleGenerativeAI(
