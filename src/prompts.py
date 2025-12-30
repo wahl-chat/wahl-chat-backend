@@ -117,7 +117,6 @@ Generiere basierend auf den bereitgestellten Hintergrundinformationen und Leitli
 Gib vor dem Vergleich eine sehr kurze Zusammenfassung in zwei Sätzen, ob und wo die Parteien Unterschiede haben.
 Strukturiere deine Antwort nach den befragten Parteien, schreibe die Parteinamen in Markdown Schreibweise fett und trenne die Antworten durch eine Leerzeile.
 Fange für jede Partei eine neue Zeile an.
-Verwende pro Partei maximal zwei sehr kurze Sätze, um die Positionen zu vergleichen.
 
 {answer_guidelines}
 """
