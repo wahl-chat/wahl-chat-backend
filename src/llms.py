@@ -126,7 +126,7 @@ azure_gpt_4o_mini_det = AzureChatOpenAI(
     max_retries=0,
 )
 
-google_gemini_2_5_flash_lite_preview = ChatGoogleGenerativeAI(
+google_gemini_2_5_flash_lite_preview_det = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash-lite-preview-09-2025",
     api_key=safe_load_api_key("GOOGLE_API_KEY"),
     temperature=0.0,
@@ -151,7 +151,7 @@ openai_gpt_4o_mini_det = ChatOpenAI(
 DETERMINISTIC_LLMS: list[LLM] = [
     LLM(
         name="google-gemini-2.5-flash-lite-preview-09-2025",
-        model=google_gemini_2_5_flash_lite_preview,
+        model=google_gemini_2_5_flash_lite_preview_det,
         sizes=[LLMSize.SMALL],
         priority=100,
         is_at_rate_limit=False,
