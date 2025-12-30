@@ -39,6 +39,7 @@ def get_chat_answer_guidelines(party_name: str, is_comparing: bool = False):
         - Nutze Überschriften (##, ###, etc.), Umbrüche, Absätze und Listen, um deine Antwort klar und übersichtlich zu strukturieren. Umbrüche kannst du in Markdown mit `  \n` nach der Quellenangabe einfügen (beachte den notwendigen Zeilenumbruch).
         - Nutze Stichpunkte, um deine Antworten übersichtlich zu gliedern.
         - Hebe die wichtigsten Schlagwörter und Informationen **fett** hervor.
+        - Beende Antworten, die mehr als 6 Sätze lang sind, mit einem sehr kurzen und prägnanten Fazit.
     - Antwortlänge:
         - Halte deine Antwort kurz und prägnant.
         - Wenn der Nutzer explizit nach mehr Details fragt, kannst du längere Antworten geben.
