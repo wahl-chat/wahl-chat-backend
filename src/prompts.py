@@ -521,8 +521,7 @@ Falls du in den Abstimmungsdaten eine Begründung der Partei für die Entscheidu
 
 {answer_guidelines}
 
-## Format deiner Antwort
-"
+**Format deiner Antwort:**
 ## Abstimmungsverhalten
 <sehr kurze Einleitung in einem Satz, zu welchem Thema das Abstimmverhalten der Partei analysiert wird>
 
@@ -531,7 +530,6 @@ Falls du in den Abstimmungsdaten eine Begründung der Partei für die Entscheidu
 
 ## Fazit
 <Gesamttendenz im Abstimmungsverhalten der Partei zum Thema - 1-3 Sätze, sachlich, ohne Wertung>
-"
 """
 
 generate_party_vote_behavior_summary_system_prompt = PromptTemplate.from_template(
