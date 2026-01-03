@@ -16,13 +16,6 @@ load_env()
 logger = logging.getLogger(__name__)
 
 
-CAPACITY_GEMINI_2_FLASH = 108
-CAPACITY_GPT_4O_OPENAI_TIER_5 = 3759
-CAPACITY_GPT_4O_AZURE = 112
-CAPACITY_GPT_4O_MINI_OPENAI_TIER_5 = 4054
-CAPACITY_GPT_4O_MINI_AZURE = 108
-
-
 azure_gpt_4o = AzureChatOpenAI(
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
     deployment_name="gpt-4o-2024-08-06",
@@ -45,6 +38,19 @@ google_gemini_2_flash = ChatGoogleGenerativeAI(
     max_retries=0,
 )
 
+google_gemini_3_flash_preview = ChatGoogleGenerativeAI(
+    model="gemini-3-flash-preview",
+    api_key=safe_load_api_key("GOOGLE_API_KEY"),
+    max_retries=0,
+    temperature=1.0,  # Explicitly set temperature to 1.0 based on Google's recommendation in https://ai.google.dev/gemini-api/docs/gemini-3#temperature
+)
+
+google_gemini_2_5_flash_preview = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash-preview-09-2025",
+    api_key=safe_load_api_key("GOOGLE_API_KEY"),
+    max_retries=0,
+)
+
 openai_gpt_4o = ChatOpenAI(
     model="gpt-4o-2024-08-06",
     api_key=safe_load_api_key("OPENAI_API_KEY"),
@@ -57,13 +63,26 @@ openai_gpt_4o_mini = ChatOpenAI(
     max_retries=0,
 )
 
-NON_DETERMINISTIC_LLMS: list[LLM] = [
+RESPONSE_GENERATION_LLMS: list[LLM] = [
+    LLM(
+        name="google-gemini-3.0-flash-preview",
+        model=google_gemini_3_flash_preview,
+        sizes=[LLMSize.SMALL, LLMSize.LARGE],
+        priority=100,
+        is_at_rate_limit=False,
+    ),
+    LLM(
+        name="google-gemini-2.5-flash-preview-09-2025",
+        model=google_gemini_2_5_flash_preview,
+        sizes=[LLMSize.SMALL, LLMSize.LARGE],
+        priority=95,
+        is_at_rate_limit=False,
+    ),
     LLM(
         name="google-gemini-2.0-flash",
         model=google_gemini_2_flash,
         sizes=[LLMSize.SMALL, LLMSize.LARGE],
-        priority=100,
-        user_capacity_per_minute=CAPACITY_GEMINI_2_FLASH,
+        priority=92,
         is_at_rate_limit=False,
     ),
     LLM(
@@ -71,7 +90,6 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         model=azure_gpt_4o,
         sizes=[LLMSize.LARGE],
         priority=90,
-        user_capacity_per_minute=CAPACITY_GPT_4O_AZURE,
         is_at_rate_limit=False,
         premium_only=True,
     ),
@@ -80,7 +98,6 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         model=openai_gpt_4o,
         sizes=[LLMSize.LARGE],
         priority=98,
-        user_capacity_per_minute=CAPACITY_GPT_4O_OPENAI_TIER_5,
         is_at_rate_limit=False,
         premium_only=False,
     ),
@@ -89,7 +106,6 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         model=azure_gpt_4o_mini,
         sizes=[LLMSize.SMALL],
         priority=50,
-        user_capacity_per_minute=CAPACITY_GPT_4O_MINI_AZURE,
         is_at_rate_limit=False,
     ),
     LLM(
@@ -97,7 +113,6 @@ NON_DETERMINISTIC_LLMS: list[LLM] = [
         model=openai_gpt_4o_mini,
         sizes=[LLMSize.SMALL],
         priority=40,
-        user_capacity_per_minute=CAPACITY_GPT_4O_MINI_OPENAI_TIER_5,
         is_at_rate_limit=False,
     ),
 ]
@@ -107,6 +122,13 @@ azure_gpt_4o_mini_det = AzureChatOpenAI(
     deployment_name="gpt-4o-mini-2024-07-18",
     openai_api_version=os.getenv("OPENAI_API_VERSION"),
     api_key=safe_load_api_key("AZURE_OPENAI_API_KEY"),
+    temperature=0.0,
+    max_retries=0,
+)
+
+google_gemini_2_5_flash_lite_preview_det = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash-lite-preview-09-2025",
+    api_key=safe_load_api_key("GOOGLE_API_KEY"),
     temperature=0.0,
     max_retries=0,
 )
@@ -126,13 +148,19 @@ openai_gpt_4o_mini_det = ChatOpenAI(
     max_retries=0,
 )
 
-DETERMINISTIC_LLMS: list[LLM] = [
+PRE_AND_POST_PROCESSING_LLMS: list[LLM] = [
+    LLM(
+        name="google-gemini-2.5-flash-lite-preview-09-2025",
+        model=google_gemini_2_5_flash_lite_preview_det,
+        sizes=[LLMSize.SMALL],
+        priority=100,
+        is_at_rate_limit=False,
+    ),
     LLM(
         name="google-gemini-2.0-flash-det",
         model=google_gemini_2_flash_det,
         sizes=[LLMSize.SMALL, LLMSize.LARGE],
-        priority=100,
-        user_capacity_per_minute=CAPACITY_GEMINI_2_FLASH,
+        priority=95,
         is_at_rate_limit=False,
     ),
     LLM(
@@ -140,7 +168,6 @@ DETERMINISTIC_LLMS: list[LLM] = [
         model=azure_gpt_4o_mini_det,
         sizes=[LLMSize.SMALL],
         priority=90,
-        user_capacity_per_minute=CAPACITY_GPT_4O_MINI_AZURE,
         is_at_rate_limit=False,
     ),
     LLM(
@@ -148,7 +175,6 @@ DETERMINISTIC_LLMS: list[LLM] = [
         model=openai_gpt_4o_mini_det,
         sizes=[LLMSize.SMALL],
         priority=80,
-        user_capacity_per_minute=CAPACITY_GPT_4O_MINI_OPENAI_TIER_5,
         is_at_rate_limit=False,
     ),
 ]
