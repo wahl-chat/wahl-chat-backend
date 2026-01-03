@@ -23,10 +23,6 @@ class LLM(BaseModel):
         ...,
         description="The priority for using this LLM above other options. The higher the number, the higher the priority.",
     )
-    user_capacity_per_minute: int = Field(
-        ...,
-        description="The number of concurrent active wahl.chat users that are estimated to be able use the model per minute.",
-    )
     is_at_rate_limit: bool = Field(
         ...,
         description="Boolean True, if the model is at rate limit, otherwise False.",
