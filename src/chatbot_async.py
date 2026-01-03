@@ -17,8 +17,8 @@ from openai.types.chat.chat_completion_message_param import (
 
 from src.models.general import LLM, LLMSize
 from src.llms import (
-    DETERMINISTIC_LLMS,
-    NON_DETERMINISTIC_LLMS,
+    PRE_AND_POST_PROCESSING_LLMS,
+    RESPONSE_GENERATION_LLMS,
     get_answer_from_llms,
     get_structured_output_from_llms,
     stream_answer_from_llms,
@@ -33,6 +33,9 @@ from src.utils import (
 )
 from src.prompts import (
     get_chat_answer_guidelines,
+    get_wahl_chat_answer_guidelines,
+    get_swiper_answer_guidelines,
+    get_party_vote_behavior_summary_guidelines,
     get_quick_reply_guidelines,
     party_response_system_prompt_template,
     streaming_party_response_user_prompt_template,
@@ -78,21 +81,23 @@ load_env()
 logger = logging.getLogger(__name__)
 
 
-chat_response_llms: list[LLM] = NON_DETERMINISTIC_LLMS
+chat_response_llms: list[LLM] = RESPONSE_GENERATION_LLMS
 
-voting_behavior_summary_llms: list[LLM] = NON_DETERMINISTIC_LLMS
+voting_behavior_summary_llms: list[LLM] = RESPONSE_GENERATION_LLMS
 
-prompt_improvement_llms: list[LLM] = DETERMINISTIC_LLMS
+prompt_improvement_llms: list[LLM] = PRE_AND_POST_PROCESSING_LLMS
 
-generate_party_list_llms: list[LLM] = DETERMINISTIC_LLMS
+generate_party_list_llms: list[LLM] = PRE_AND_POST_PROCESSING_LLMS
 
-generate_message_type_and_general_question_llms: list[LLM] = DETERMINISTIC_LLMS
+generate_message_type_and_general_question_llms: list[LLM] = (
+    PRE_AND_POST_PROCESSING_LLMS
+)
 
-generate_chat_summary_llms: list[LLM] = DETERMINISTIC_LLMS
+generate_chat_summary_llms: list[LLM] = PRE_AND_POST_PROCESSING_LLMS
 
-generate_chat_title_and_quick_replies_llms: list[LLM] = DETERMINISTIC_LLMS
+generate_chat_title_and_quick_replies_llms: list[LLM] = PRE_AND_POST_PROCESSING_LLMS
 
-reranking_llms = DETERMINISTIC_LLMS
+reranking_llms = PRE_AND_POST_PROCESSING_LLMS
 
 perplexity_client = AsyncOpenAI(
     api_key=os.getenv("PERPLEXITY_API_KEY"), base_url="https://api.perplexity.ai"
@@ -412,24 +417,25 @@ async def generate_streaming_chatbot_response(
 
     now = datetime.now()
 
-    answer_guidelines = get_chat_answer_guidelines(party.name, is_comparing=False)
-
     if party.party_id == WAHL_CHAT_PARTY.party_id:
+        answer_guidelines = get_wahl_chat_answer_guidelines()
         all_parties_list = ""
-        for party in all_parties:
-            all_parties_list += f"### {party.long_name}\n"
-            all_parties_list += f"Abkürzung: {party.name}\n"
-            all_parties_list += f"Beschreibung: {party}\n"
+        for p in all_parties:
+            all_parties_list += f"### {p.long_name}\n"
+            all_parties_list += f"Abkürzung: {p.name}\n"
+            all_parties_list += f"Beschreibung: {p}\n"
             all_parties_list += (
-                f"Spitzenkandidat*In für die Bundestagswahl 2025: {party.candidate}\n"
+                f"Spitzenkandidat*In für die Bundestagswahl 2025: {p.candidate}\n"
             )
         system_prompt = wahl_chat_response_system_prompt_template.format(
             all_parties_list=all_parties_list,
             date=now.strftime("%Y-%m-%d"),
             time=now.strftime("%H:%M"),
             rag_context=rag_context,
+            answer_guidelines=answer_guidelines,
         )
     else:
+        answer_guidelines = get_chat_answer_guidelines(party.name, is_comparing=False)
         system_prompt = party_response_system_prompt_template.format(
             party_name=party.name,
             party_long_name=party.long_name,
@@ -597,10 +603,12 @@ async def generate_party_vote_behavior_summary(
     if votes_list == "":
         votes_list = "Keine passenden Abstimmungen gefunden."
 
+    answer_guidelines = get_party_vote_behavior_summary_guidelines()
     system_prompt = generate_party_vote_behavior_summary_system_prompt.format(
         party_name=party.name,
         party_long_name=party.long_name,
         votes_list=votes_list,
+        answer_guidelines=answer_guidelines,
     )
     user_prompt = generate_party_vote_behavior_summary_user_prompt.format(
         user_message=last_user_message,
@@ -657,9 +665,11 @@ async def generate_swiper_assistant_response(
     chat_response_llm_size: LLMSize,
 ) -> Message:
     now = datetime.now()
+    answer_guidelines = get_swiper_answer_guidelines()
     system_prompt = swiper_assistant_system_prompt_template.format(
         date=now.strftime("%Y-%m-%d"),
         time=now.strftime("%H:%M"),
+        answer_guidelines=answer_guidelines,
     )
 
     user_prompt = swiper_assistant_user_prompt_template.format(
