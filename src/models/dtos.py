@@ -157,7 +157,9 @@ class ParliamentaryQuestionDto(BaseModel):
 
 
 class ChatUserMessageDto(BaseModel):
-    id: str = Field(..., description="The ID of the chat user message")
+    id: Optional[str] = Field(
+        default=None, description="The ID of the chat user message"
+    )
     session_id: str = Field(
         ..., description="The ID of the chat session to which the message belongs"
     )
@@ -332,8 +334,8 @@ class VoiceTranscribedDto(BaseModel):
     grouped_message_id: str = Field(
         ..., description="Wrapper ID to correlate request with response"
     )
-    message_id: str = Field(
-        ..., description="Inner ID to correlate request with response"
+    message_id: Optional[str] = Field(
+        default=None, description="Inner ID to correlate request with response"
     )
     transcribed_text: str = Field(..., description="The transcribed text from audio")
 
