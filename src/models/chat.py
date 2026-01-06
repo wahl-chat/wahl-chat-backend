@@ -16,6 +16,7 @@ class Role(str, Enum):
 
 
 class Message(BaseModel):
+    id: Optional[str] = Field(default=None, description="The unique ID of the message")
     role: Role = Field(..., description="The role of the message author")
     content: str = Field(..., description="The message content")
     sources: Optional[List[dict]] = Field(
