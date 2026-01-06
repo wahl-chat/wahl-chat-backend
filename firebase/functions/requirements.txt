@@ -9,4 +9,4 @@ langchain-openai==1.1.6
 langchain-qdrant==1.1.0
 pypdf==6.5.0
 pydantic==2.12.5
-qdrant-client==1.15.1
+qdrant-client==1.16.2
