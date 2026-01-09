@@ -148,15 +148,18 @@ def build_message_from_perplexity_response(response: ChatCompletion) -> Message:
 def sanitize_references(text: str) -> str:
     # GPT 4o-mini sometimes references with [id1], [<1>], ... instead of [1]
     # This function sanitizes the references to [1], [2], ... by removing any non-numeric characters from the reference
+    # Only matches citation-like patterns (containing digits), not markdown links like [text](url)
 
-    def sanitize_citatoin(match):
+    def sanitize_citation(match):
         content = match.group(1)
         cleaned_content = re.sub(r"[^0-9, ]", "", content)
         return f"[{cleaned_content}]"
 
-    citations_pattern = r"\[(.*?)\]"
+    # Only match brackets that contain at least one digit (citations), not followed by (url)
+    # This avoids breaking markdown links like [text](url)
+    citations_pattern = r"\[([^\]]*\d[^\]]*)\](?!\()"
 
-    sanitized_text = re.sub(citations_pattern, sanitize_citatoin, text)
+    sanitized_text = re.sub(citations_pattern, sanitize_citation, text)
     return sanitized_text
 
 
@@ -175,3 +178,21 @@ Diese Maßnahmen zielen darauf ab, die Arbeitsbedingungen und die soziale Absich
 
 def get_chat_history_hash_key(conversation_history_str: str) -> str:
     return xxhash.xxh64(conversation_history_str).hexdigest()
+
+
+def sanitize_text_for_speech(text: str) -> str:
+    """Remove markdown formatting and citations for TTS output."""
+    # Remove citations like [1], [1, 2, 3]
+    text = re.sub(r"\s*\[\d+(?:,\s*\d+)*\]", "", text)
+
+    # Remove markdown bold/italic
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)  # **bold** → bold
+    text = re.sub(r"\*(.+?)\*", r"\1", text)  # *italic* → italic
+
+    # Clean up extra whitespace
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = text.strip()
+
+    logger.debug(f"Sanitized text: {text}")
+
+    return text
