@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 
-from datetime import date
+from datetime import date as date_type
 from enum import Enum
 from typing import NamedTuple
 
@@ -97,7 +97,7 @@ class Context(BaseModel):
     context_id: str = Field(..., description="Unique identifier for the context")
     name: str = Field(..., description="Display name (e.g., 'Bundestagswahl 2025')")
     type: ContextType = Field(..., description="Type: election or general")
-    date: date | None = Field(
+    date: date_type | None = Field(
         None, description="Relevant date (e.g., election date for elections)"
     )
     country_code: str = Field(..., description="ISO 3166-1 alpha-2 country code")
