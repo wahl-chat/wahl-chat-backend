@@ -110,20 +110,25 @@ async def aget_default_context() -> Context | None:
     return None
 
 
-async def aget_context_parties(context_id: str) -> list[ContextParty]:
-    """Get all parties for a given context."""
+async def aget_parties_for_context(context_id: str) -> list[ContextParty]:
+    """Get all parties for a context from the sub-collection."""
     parties = (
-        async_db.collection("context_parties")
-        .where("context_id", "==", context_id)
+        async_db.collection("contexts")
+        .document(context_id)
+        .collection("parties")
         .stream()
     )
     return [ContextParty(**party.to_dict()) async for party in parties]
 
 
-async def aget_context_party(context_id: str, party_id: str) -> ContextParty | None:
-    """Get a specific party within a context."""
-    context_party_id = ContextParty.build_id(context_id, party_id)
-    party_ref = async_db.collection("context_parties").document(context_party_id)
+async def aget_party_for_context(context_id: str, party_id: str) -> ContextParty | None:
+    """Get a specific party from the context's sub-collection."""
+    party_ref = (
+        async_db.collection("contexts")
+        .document(context_id)
+        .collection("parties")
+        .document(party_id)
+    )
     party = await party_ref.get()
     if party.exists:
         return ContextParty(**party.to_dict())
