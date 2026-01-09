@@ -216,6 +216,7 @@ async def fetch_and_emit_party_response(
                 rag_query=improved_rag_query,
                 chat_history=conversation_history_str,
                 user_message=question_for_party,
+                context_id=group_chat_session.context_id,
             )
             # comparing scenario requires improved_rag_query to be a list, so match for both scenarios
             improved_rag_query_list = [improved_rag_query]
@@ -451,6 +452,7 @@ async def process_party(
     relevant_doc_dict: Dict[str, List[Document]],
     lock: asyncio.Lock,
     improved_rag_query_list: List[str],
+    context_id: str,
 ):
     """Process a party's documents for comparison questions."""
     logger.debug(
@@ -466,6 +468,7 @@ async def process_party(
         rag_query=improved_rag_query,
         chat_history=chat_history_str,
         user_message=general_question,
+        context_id=context_id,
     )
 
     # Safely update the shared improved_rag_query list
@@ -695,6 +698,7 @@ async def generate_chat_answer(
                 relevant_doc_dict,
                 lock,
                 improved_rag_query_list,
+                context_id=chat_session.context_id,
             )
             for party in parties_being_compared
         ]
