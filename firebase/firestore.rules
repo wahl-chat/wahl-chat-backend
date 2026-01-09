@@ -7,12 +7,12 @@ service cloud.firestore {
       allow read;
     }
 
-    match /contexts/{document=**} {
+    match /contexts/{context_id} {
       allow read;
-    }
 
-    match /context_parties/{document=**} {
-      allow read;
+      match /parties/{party_id} {
+        allow read;
+      }
     }
 
     match /users/{user_id}/chat_sessions/{session_id} {

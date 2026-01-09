@@ -140,7 +140,6 @@ google_gemini_2_flash_det = ChatGoogleGenerativeAI(
     max_retries=0,
 )
 
-
 openai_gpt_4o_mini_det = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=safe_load_api_key("OPENAI_API_KEY"),
