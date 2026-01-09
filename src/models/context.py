@@ -131,16 +131,14 @@ class Context(BaseModel):
 
 class ContextParty(BaseModel):
     """
-    A party within a specific context.
+    A party within a specific context (stored as sub-collection of Context).
 
     The same party (e.g., SPD) can have different configurations
     in different contexts (different candidates, manifestos, etc.).
+
+    Firestore path: contexts/{context_id}/parties/{party_id}
     """
 
-    context_party_id: str = Field(
-        ..., description="Unique ID (e.g., 'bundestagswahl-2025_spd')"
-    )
-    context_id: str = Field(..., description="Reference to the context")
     party_id: str = Field(..., description="Party identifier (e.g., 'spd', 'cdu')")
     name: str = Field(..., description="Short name (e.g., 'SPD')")
     long_name: str = Field(
@@ -160,8 +158,3 @@ class ContextParty(BaseModel):
         "#808080", description="Brand color for UI (hex format)"
     )
     logo_src: str = Field("", description="URL/path to party logo")
-
-    @classmethod
-    def build_id(cls, context_id: str, party_id: str) -> str:
-        """Build the context_party_id from context and party IDs."""
-        return f"{context_id}_{party_id}"
