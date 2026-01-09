@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
-
+import logging
 import os
 from typing import Optional
 import firebase_admin
@@ -12,6 +12,8 @@ from src.models.party import Party
 from src.utils import load_env
 
 load_env()
+
+logger = logging.getLogger(__name__)
 
 credentials_path = (
     "wahl-chat-firebase-adminsdk.json"
