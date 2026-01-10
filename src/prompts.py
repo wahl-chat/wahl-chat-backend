@@ -1,10 +1,36 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 
+import locale
+from datetime import date
+
 from langchain.prompts import (
     PromptTemplate,
 )
 
 from src.models.context import Context
+
+
+def format_date_localized(d: date) -> str:
+    """Format a date using locale-aware formatting.
+
+    Currently only supports German. In the future, this function could accept
+    a language parameter to support other locales.
+
+    Args:
+        d: The date to format
+
+    Returns:
+        Formatted date string (e.g., "23. Februar 2025")
+    """
+    try:
+        locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
+    except locale.Error:
+        try:
+            locale.setlocale(locale.LC_TIME, "German")
+        except locale.Error:
+            pass  # Fall back to current locale
+
+    return d.strftime("%-d. %B %Y")
 
 
 def get_base_guidelines(
@@ -778,31 +804,14 @@ def build_prompt_context(context: Context) -> dict[str, str]:
 
     # Format the date if available
     if context.date:
-        # Format as German date: "23. Februar 2025"
-        months_de = {
-            1: "Januar",
-            2: "Februar",
-            3: "März",
-            4: "April",
-            5: "Mai",
-            6: "Juni",
-            7: "Juli",
-            8: "August",
-            9: "September",
-            10: "Oktober",
-            11: "November",
-            12: "Dezember",
-        }
-        date_formatted = (
-            f"{context.date.day}. {months_de[context.date.month]} {context.date.year}"
-        )
+        date_formatted = format_date_localized(context.date)
 
-        # Determine if the date is in the past or future
-        from datetime import date as date_type
-
-        today = date_type.today()
+        # Determine if the date is in the past, today, or future
+        today = date.today()
         if context.date < today:
             date_info = f"Hat stattgefunden am {date_formatted}"
+        elif context.date == today:
+            date_info = f"Findet heute statt ({date_formatted})"
         else:
             date_info = f"Findet statt am {date_formatted}"
     else:
