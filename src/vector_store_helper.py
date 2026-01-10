@@ -37,15 +37,15 @@ PARLIAMENTARY_QUESTIONS_INDEX_NAME = f"parliamentary_questions{env_suffix}"
 
 
 def get_context_collection_name(context_id: str) -> str:
-    """Get the Qdrant collection name for a given context.
+    """Get the Qdrant collection name for party documents in a given context.
 
     Args:
         context_id: The context identifier (e.g., 'bundestagswahl-2025')
 
     Returns:
-        The collection name in format: context_{context_id}_{env}
+        The collection name in format: context_{context_id}_party_docs_{env}
     """
-    return f"context_{context_id}{env_suffix}"
+    return f"context_{context_id}_party_docs{env_suffix}"
 
 
 embed = OpenAIEmbeddings(

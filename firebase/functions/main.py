@@ -68,7 +68,7 @@ def get_context_collection_name(context_id: str) -> str:
     """
     if context_id == DEFAULT_CONTEXT_ID:
         return ALL_PARTIES_COLLECTION
-    return f"context_{context_id}{env_suffix}"
+    return f"context_{context_id}_party_docs{env_suffix}"
 
 
 # Set region based on environment at module load time
@@ -96,13 +96,19 @@ def is_party_pdf_for_vector_store(
         return False
 
     # Check if the file is in the expected directory structure
-    # Expected: public/{context_id}/{party_id}/{filename} = 4 parts
+    # Expected: public/{context_id}/{party_id}/{filename} = exactly 4 parts
     path_parts = name.split("/")
-    if len(path_parts) < 4:
+    if len(path_parts) != 4:
         logger.info(
             f"Skipping file as it does not match expected path format "
             f"'public/{{context_id}}/{{party_id}}/{{filename}}': {name}"
         )
+        return False
+
+    # Validate that path components are non-empty
+    context_id, party_id, filename = path_parts[1], path_parts[2], path_parts[3]
+    if not context_id or not party_id or not filename:
+        logger.info(f"Skipping file as path contains empty components: {name}")
         return False
 
     # Check if the file is a PDF
@@ -439,7 +445,7 @@ def on_party_document_upload(
     path_parts = name.split("/")
     context_id = path_parts[1]
     party_id = path_parts[2]
-    file_name = path_parts[3].replace(".pdf", "")
+    file_name = path_parts[3].removesuffix(".pdf")
 
     logger.info(f"Extracted context_id: {context_id}, party_id: {party_id}")
 
@@ -572,7 +578,7 @@ def on_party_document_deleted(
     path_parts = name.split("/")
     context_id = path_parts[1]
     party_id = path_parts[2]
-    file_name = path_parts[3].replace(".pdf", "")
+    file_name = path_parts[3].removesuffix(".pdf")
 
     logger.info(f"Extracted context_id: {context_id}, party_id: {party_id}")
 
