@@ -313,16 +313,29 @@ async def fetch_and_emit_party_response(
 
         chunk_index = 0
         async for message_chunk in chunk_stream:
+            logger.debug(f"Received message chunk: {message_chunk}")
+
+            chunk_content = message_chunk.content
+            # Skip non-text chunks (e.g. reasoning chunks) if returned by the model
+            if (
+                isinstance(chunk_content, dict)
+                and chunk_content.get("type", "text") != "text"
+            ):
+                logger.debug(f"Skipping non-text chunk: {chunk_content}")
+                continue
+
             if full_response is None:
                 full_response = message_chunk
             else:
                 full_response += message_chunk
 
-            for i in range(0, len(message_chunk.content), MAX_RESPONSE_CHUNK_LENGTH):
+            # Use text instead of content attribute to deal with new response structure of Gemini-3 (https://docs.langchain.com/oss/python/integrations/chat/google_generative_ai#invocation)
+            chunk_text = message_chunk.text
+            for i in range(0, len(chunk_text), MAX_RESPONSE_CHUNK_LENGTH):
                 if i > 0:
                     # Sleep for a short time to simulate processing time
                     await asyncio.sleep(0.025)
-                chunk_content = message_chunk.content[i : i + MAX_RESPONSE_CHUNK_LENGTH]
+                chunk_content = chunk_text[i : i + MAX_RESPONSE_CHUNK_LENGTH]
                 chat_response_dto = PartyResponseChunkDto(
                     session_id=group_chat_session.session_id,
                     party_id=party.party_id,
@@ -353,22 +366,17 @@ async def fetch_and_emit_party_response(
 
         # Build the full message
         if full_response is None:
-            full_content = ""
+            full_response_text = ""
         else:
-            # Convert content to string if it's a list
-            full_content = (
-                str(full_response.content)
-                if isinstance(full_response.content, list)
-                else full_response.content
-            )
+            full_response_text = full_response.text
 
-        full_content = sanitize_references(full_content)
+        full_response_text = sanitize_references(full_response_text)
 
         message_id = str(uuid.uuid4())
         chatbot_message = Message(
             id=message_id,
             role="assistant",
-            content=full_content,
+            content=full_response_text,
             sources=sources,
             party_id=party.party_id,
             current_chat_title=group_chat_session.title,
@@ -381,7 +389,7 @@ async def fetch_and_emit_party_response(
         party_response_complete_dto = PartyResponseCompleteDto(
             session_id=group_chat_session.session_id,
             party_id=party.party_id,
-            complete_message=full_content,
+            complete_message=full_response_text,
             message_id=message_id,
             status=Status(indicator=StatusIndicator.SUCCESS, message="Success"),
         )
@@ -399,7 +407,7 @@ async def fetch_and_emit_party_response(
                 f"Writing generated response to cache for party {party.party_id} and cache key {cache_key}"
             )
             cached_answer = CachedResponse(
-                content=full_content,
+                content=full_response_text,
                 sources=sources,
                 rag_query=improved_rag_query_list,
                 created_at=datetime.now(),
