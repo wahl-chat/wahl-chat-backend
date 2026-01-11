@@ -268,7 +268,6 @@ user_prompt_improvement_template = PromptTemplate.from_template(
     user_prompt_improvement_template_str
 )
 
-
 perplexity_system_prompt_str = """
 # Rolle
 Du bist ein neutraler Politikbeobachter, der eine kritische Beurteilung zu der Antwort der Partei {party_name} generiert.
@@ -362,7 +361,6 @@ Allgemeine Fragen zur Wahl, zum Wahlsystem oder zum Chatbot "wahl.chat" (auch "W
 Nutzerfragen, die nach der passenden Partei für eine bestimmte politische Position, nach einer Wahlempfehlung oder Wertung fragen, sollen an "wahl-chat" gerichtet werden.
 Wenn der Nutzer fragt, wer eine bestimmte Position vertritt oder eine Handlung durchführen will, soll die Frage auch an "wahl-chat" gerichtet werden.
 """
-
 
 determine_question_targets_system_prompt = PromptTemplate.from_template(
     determine_question_targets_system_prompt_str
@@ -507,7 +505,6 @@ generate_chat_title_and_quick_replies_user_prompt = PromptTemplate.from_template
     generate_chat_title_and_quick_replies_user_prompt_str
 )
 
-
 generate_wahl_chat_title_and_quick_replies_system_prompt_str = """
 # Rolle
 Du generierst den Titel und Quick Replies für einen Chat in dem die folgenden Parteien vertreten sind:
@@ -528,7 +525,6 @@ Halte dich an die vorgegebene Antwortstruktur im JSON-Format.
 generate_wahl_chat_title_and_quick_replies_system_prompt = PromptTemplate.from_template(
     generate_wahl_chat_title_and_quick_replies_system_prompt_str
 )
-
 
 generate_party_vote_behavior_summary_system_prompt_str = """
 # Rolle
@@ -564,7 +560,6 @@ generate_party_vote_behavior_summary_system_prompt = PromptTemplate.from_templat
     generate_party_vote_behavior_summary_system_prompt_str
 )
 
-
 generate_party_vote_behavior_summary_user_prompt_str = """
 ## Nutzer-Nachricht
 "{user_message}"
@@ -577,7 +572,6 @@ generate_party_vote_behavior_summary_user_prompt_str = """
 generate_party_vote_behavior_summary_user_prompt = PromptTemplate.from_template(
     generate_party_vote_behavior_summary_user_prompt_str
 )
-
 
 system_prompt_improvement_rag_template_vote_behavior_summary_str = """
 # Rolle
@@ -631,14 +625,14 @@ user_prompt_improvement_rag_template_vote_behavior_summary = (
     )
 )
 
-
 wahl_chat_response_system_prompt_template_str = """
 # Rolle
 Du bist der wahl.chat Assistent. Du gibst Bürger:innen Informationen zu Politik, zum Wahlsystem und zur Anwendung wahl.chat.
 
 # Hintergrundinformationen
 ## Aktueller Kontext: {context_name}
-{context_date_info}
+Datum: {context_date_info}
+Standort: {context_location}
 
 ## Parteien, zu denen wahl.chat Fragen beantworten kann
 {all_parties_list}
@@ -704,7 +698,8 @@ wahl.chat Swiper ist eine KI-gestützte Alternative zum klassischen Wahl-O-Mat. 
 Zusätzlich können die Nutzer:innen dir Fragen stellen, um eine besser informierte Entscheidung über die Zustimmung oder Ablehnung zu den Fragen im wahl.chat Swiper zu treffen.
 
 ## Aktueller Kontext: {context_name}
-{context_date_info}
+Datum: {context_date_info}
+Standort: {context_location}
 
 ## Aktuelle Informationen
 Datum: {date}
@@ -741,7 +736,6 @@ Fokussiere dich auf aktuelle wissenschaftliche oder journalistische Quellen, um 
 swiper_assistant_user_prompt_template = PromptTemplate.from_template(
     swiper_assistant_user_prompt_template_str
 )
-
 
 generate_swiper_assistant_title_and_quick_replies_system_prompt_str = """
 # Rolle
@@ -800,6 +794,7 @@ def build_prompt_context(context: Context) -> dict[str, str]:
         - context_date_info: Full date information for prompts
         - context_type: "election" or "general"
         - context_id: The context identifier
+        - context_location: The location of the context
     """
 
     # Format the date if available
@@ -824,4 +819,5 @@ def build_prompt_context(context: Context) -> dict[str, str]:
         "context_date_info": date_info,
         "context_type": context.type.value,
         "context_id": context.context_id,
+        "context_location": context.location_name,
     }
