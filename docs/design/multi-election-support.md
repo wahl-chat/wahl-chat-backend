@@ -222,7 +222,7 @@ Admin endpoints secured via Firebase Admin claims or API key.
 
 - `aget_contexts()` → List[Context]
 - `aget_context_by_id(context_id)` → Context
-- `aget_default_context()` → Context
+- `aget_default_context()` → Context (uses `DEFAULT_CONTEXT_ID` constant)
 - `aget_parties_for_context(context_id)` → List[ContextParty]
 - `aget_party_for_context(context_id, party_id)` → ContextParty
 
