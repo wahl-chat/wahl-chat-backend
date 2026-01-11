@@ -4,73 +4,14 @@
 
 from datetime import date as date_type
 from enum import Enum
-from typing import NamedTuple
 
 from pydantic import BaseModel, Field
 
-
 # =============================================================================
-# Hardcoded Reference Data (for easier i18n later)
+# Constants
 # =============================================================================
 
-
-class Country(NamedTuple):
-    """Country reference data."""
-
-    code: str
-    name: str
-
-
-class Region(NamedTuple):
-    """Region reference data."""
-
-    code: str
-    country_code: str
-    name: str
-
-
-# ISO 3166-1 alpha-2 country codes
-COUNTRIES: dict[str, Country] = {
-    "de": Country(code="de", name="Deutschland"),
-    "at": Country(code="at", name="Österreich"),
-}
-
-
-# ISO 3166-2 style region codes (country-region)
-REGIONS: dict[str, Region] = {
-    # Germany
-    "de-bw": Region(code="de-bw", country_code="de", name="Baden-Württemberg"),
-    "de-by": Region(code="de-by", country_code="de", name="Bayern"),
-    "de-be": Region(code="de-be", country_code="de", name="Berlin"),
-    "de-bb": Region(code="de-bb", country_code="de", name="Brandenburg"),
-    "de-hb": Region(code="de-hb", country_code="de", name="Bremen"),
-    "de-hh": Region(code="de-hh", country_code="de", name="Hamburg"),
-    "de-he": Region(code="de-he", country_code="de", name="Hessen"),
-    "de-mv": Region(code="de-mv", country_code="de", name="Mecklenburg-Vorpommern"),
-    "de-ni": Region(code="de-ni", country_code="de", name="Niedersachsen"),
-    "de-nw": Region(code="de-nw", country_code="de", name="Nordrhein-Westfalen"),
-    "de-rp": Region(code="de-rp", country_code="de", name="Rheinland-Pfalz"),
-    "de-sl": Region(code="de-sl", country_code="de", name="Saarland"),
-    "de-sn": Region(code="de-sn", country_code="de", name="Sachsen"),
-    "de-st": Region(code="de-st", country_code="de", name="Sachsen-Anhalt"),
-    "de-sh": Region(code="de-sh", country_code="de", name="Schleswig-Holstein"),
-    "de-th": Region(code="de-th", country_code="de", name="Thüringen"),
-}
-
-
-def get_country(country_code: str) -> Country | None:
-    """Get country by code."""
-    return COUNTRIES.get(country_code)
-
-
-def get_region(region_code: str) -> Region | None:
-    """Get region by code."""
-    return REGIONS.get(region_code)
-
-
-def get_regions_for_country(country_code: str) -> list[Region]:
-    """Get all regions for a country."""
-    return [r for r in REGIONS.values() if r.country_code == country_code]
+DEFAULT_CONTEXT_ID = "bundestagswahl-2025"
 
 
 # =============================================================================
@@ -96,37 +37,28 @@ class Context(BaseModel):
 
     context_id: str = Field(..., description="Unique identifier for the context")
     name: str = Field(..., description="Display name (e.g., 'Bundestagswahl 2025')")
+    short_name: str = Field(..., description="Short name of the context")
     type: ContextType = Field(..., description="Type: election or general")
     date: date_type | None = Field(
         None, description="Relevant date (e.g., election date for elections)"
     )
-    country_code: str = Field(..., description="ISO 3166-1 alpha-2 country code")
-    region_code: str | None = Field(
-        None, description="ISO 3166-2 region code (null for federal level)"
+    location_name: str = Field(
+        ..., description="Location for the context as used in the prompt"
     )
     is_active: bool = Field(
         True, description="Whether this context is currently active"
     )
-    is_default: bool = Field(
-        False, description="Whether this is the default context to show"
+    icon_url: str | None = Field(None, description="Icon URL for the context")
+    supports_swiper: bool = Field(
+        ..., description="Whether the context supports the swiper"
     )
-
-    @property
-    def country(self) -> Country | None:
-        """Get the country for this context."""
-        return get_country(self.country_code)
-
-    @property
-    def region(self) -> Region | None:
-        """Get the region for this context (if any)."""
-        if self.region_code:
-            return get_region(self.region_code)
-        return None
-
-    @property
-    def is_federal(self) -> bool:
-        """Check if this is a federal-level context."""
-        return self.region_code is None
+    supports_voting_behavior: bool = Field(
+        ..., description="Whether the context supports voting behavior"
+    )
+    relevant_area: str | None = Field(
+        ...,
+        description="Relevant area for the context to check which is the most relevant context for a user",
+    )
 
 
 class ContextParty(BaseModel):
