@@ -1,0 +1,13 @@
+{
+  "bundestagswahl-2025": {
+    "context_id": "bundestagswahl-2025",
+    "name": "Bundestagswahl 2025",
+    "short_name": "BTW 25",
+    "type": "election",
+    "date": "2025-02-23",
+    "location_name": "Deutschland",
+    "is_active": true,
+    "supports_swiper": true,
+    "supports_voting_behavior": true
+  }
+}

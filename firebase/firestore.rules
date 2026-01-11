@@ -7,6 +7,14 @@ service cloud.firestore {
       allow read;
     }
 
+    match /contexts/{context_id} {
+      allow read;
+
+      match /parties/{party_id} {
+        allow read;
+      }
+    }
+
     match /users/{user_id}/chat_sessions/{session_id} {
       allow read, write: if request.auth != null && request.auth.uid == user_id;
     }
