@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 
-from langchain.prompts import (
+from langchain_core.prompts import (
     PromptTemplate,
 )
 
