@@ -104,7 +104,6 @@ def build_document_string_for_context(
 - Dokumentname: {doc.metadata.get("document_name", "unbekannt")}
 - Veröffentlichungsdatum: {doc.metadata.get("document_publish_date", "unbekannt")}
 - Inhalt: "{doc.page_content}"
-
 """
 
 
