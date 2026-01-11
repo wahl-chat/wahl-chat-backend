@@ -663,9 +663,11 @@ async def generate_chat_answer(
         for party in parties_to_respond:
             # get the proposed questions for the party
             proposed_questions_for_party = await aget_proposed_questions_for_party(
-                party.party_id
+                chat_session.context_id, party.party_id
             )
-            proposed_questions_group = await aget_proposed_questions_for_party("group")
+            proposed_questions_group = await aget_proposed_questions_for_party(
+                chat_session.context_id, "group"
+            )
 
             is_proposed_question = (
                 user_message.content in proposed_questions_for_party

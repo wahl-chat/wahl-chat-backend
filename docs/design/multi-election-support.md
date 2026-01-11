@@ -39,8 +39,10 @@ Context
 ├── date: date | null (e.g., election date)
 ├── country_code: string (e.g., "de")
 ├── region_code: string | null (e.g., "de-nw", null for federal)
-├── is_active: boolean
-└── is_default: boolean (the default context to show)
+└── is_active: boolean
+
+# Constant (in src/models/context.py)
+DEFAULT_CONTEXT_ID = "bundestagswahl-2025"
 
 ContextParty (sub-collection of Context)
 ├── party_id: string (PK, e.g., "spd", "cdu")
@@ -65,7 +67,6 @@ contexts/{context_id}
 ├── country_code: string
 ├── region_code: string | null
 ├── is_active: boolean
-├── is_default: boolean
 └── parties/{party_id}  # Sub-collection
     ├── party_id: string (e.g., "spd", "cdu")
     ├── long_name: string
@@ -457,7 +458,6 @@ Delete `context_parties.json` and modify `contexts.json` to include nested parti
     "country_code": "de",
     "region_code": null,
     "is_active": true,
-    "is_default": true,
     "__subcollections__": {
       "parties": {
         "spd": {

@@ -46,8 +46,16 @@ async def aget_party_by_id(party_id: str) -> Optional[Party]:
     return None
 
 
-async def aget_proposed_questions_for_party(party_id: str) -> list[str]:
-    questions = async_db.collection(f"proposed_questions/{party_id}/questions").stream()
+async def aget_proposed_questions_for_party(
+    context_id: str, party_id: str
+) -> list[str]:
+    """Get proposed questions for a party within a context.
+
+    Path: proposed_questions/{context_id}/parties/{party_id}/questions
+    """
+    questions = async_db.collection(
+        f"proposed_questions/{context_id}/parties/{party_id}/questions"
+    ).stream()
     return [question.get("content") async for question in questions]
 
 
