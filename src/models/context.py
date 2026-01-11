@@ -10,6 +10,12 @@ from pydantic import BaseModel, Field
 
 
 # =============================================================================
+# Constants
+# =============================================================================
+
+DEFAULT_CONTEXT_ID = "bundestagswahl-2025"
+
+# =============================================================================
 # Hardcoded Reference Data (for easier i18n later)
 # =============================================================================
 
@@ -106,9 +112,6 @@ class Context(BaseModel):
     )
     is_active: bool = Field(
         True, description="Whether this context is currently active"
-    )
-    is_default: bool = Field(
-        False, description="Whether this is the default context to show"
     )
 
     @property
