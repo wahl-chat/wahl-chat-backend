@@ -96,7 +96,7 @@ async def aget_contexts() -> list[Context]:
     return [Context(**context.to_dict()) async for context in contexts]
 
 
-async def aget_context_by_id(context_id: str) -> Context | None:
+async def aget_context_by_id(context_id: str) -> Optional[Context]:
     """Get a context by its ID."""
     context_ref = async_db.collection("contexts").document(context_id)
     context = await context_ref.get()
@@ -105,7 +105,7 @@ async def aget_context_by_id(context_id: str) -> Context | None:
     return None
 
 
-async def aget_default_context() -> Context | None:
+async def aget_default_context() -> Optional[Context]:
     """Get the default context (is_default=True)."""
     contexts = (
         async_db.collection("contexts")
@@ -129,7 +129,9 @@ async def aget_parties_for_context(context_id: str) -> list[ContextParty]:
     return [ContextParty(**party.to_dict()) async for party in parties]
 
 
-async def aget_party_for_context(context_id: str, party_id: str) -> ContextParty | None:
+async def aget_party_for_context(
+    context_id: str, party_id: str
+) -> Optional[ContextParty]:
     """Get a specific party from the context's sub-collection."""
     party_ref = (
         async_db.collection("contexts")

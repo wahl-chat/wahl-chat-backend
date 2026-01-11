@@ -15,6 +15,7 @@ from src.models.party import Party
 from src.utils import load_env, safe_load_api_key
 
 from src.chatbot_async import rerank_documents
+from functools import lru_cache
 
 load_env()
 
@@ -59,13 +60,6 @@ qdrant_client = QdrantClient(
 )
 
 # Initialize Qdrant vector stores
-qdrant_vector_store = QdrantVectorStore(
-    client=qdrant_client,
-    collection_name=PARTY_INDEX_NAME,
-    embedding=embed,
-    vector_name="dense",
-    content_payload_key="text",
-)
 voting_behavior_vector_store = QdrantVectorStore(
     client=qdrant_client,
     collection_name=VOTING_BEHAVIOR_INDEX_NAME,
@@ -82,6 +76,19 @@ parliamentary_questions_vector_store = QdrantVectorStore(
 )
 
 
+def _search_results_to_documents(search_result: list) -> list[Document]:
+    """Convert Qdrant search results to LangChain Documents."""
+    documents = []
+    for point in search_result:
+        if point.payload is None:
+            continue
+        content = point.payload.get("text", "")
+        metadata = {k: v for k, v in point.payload.items() if k != "text"}
+        documents.append(Document(page_content=content, metadata=metadata))
+    return documents
+
+
+@lru_cache(maxsize=16)
 def _get_vector_store_for_context(context_id: str) -> QdrantVectorStore:
     """Get or create a QdrantVectorStore for a given context.
 
@@ -153,23 +160,7 @@ async def _identify_relevant_documents(
         score_threshold=score_threshold,
     )
 
-    # Create LangChain Documents manually to preserve all metadata
-    documents = []
-    for point in search_result:
-        if point.payload is None:
-            continue
-
-        # Extract content from text field
-        content = point.payload.get("text", "")
-
-        # Extract metadata (everything except text)
-        metadata = {k: v for k, v in point.payload.items() if k != "text"}
-
-        # Create Document with proper content and metadata
-        doc = Document(page_content=content, metadata=metadata)
-        documents.append(doc)
-
-    return documents
+    return _search_results_to_documents(search_result)
 
 
 async def identify_relevant_docs(
@@ -309,16 +300,7 @@ async def identify_relevant_votes(
         score_threshold=score_threshold,
     )
 
-    documents = []
-    for point in search_result:
-        if point.payload is None:
-            continue
-        content = point.payload.get("text", "")
-        metadata = {k: v for k, v in point.payload.items() if k != "text"}
-        doc = Document(page_content=content, metadata=metadata)
-        documents.append(doc)
-
-    return documents
+    return _search_results_to_documents(search_result)
 
 
 async def identify_relevant_parliamentary_questions(
@@ -350,13 +332,4 @@ async def identify_relevant_parliamentary_questions(
         score_threshold=score_threshold,
     )
 
-    documents = []
-    for point in search_result:
-        if point.payload is None:
-            continue
-        content = point.payload.get("text", "")
-        metadata = {k: v for k, v in point.payload.items() if k != "text"}
-        doc = Document(page_content=content, metadata=metadata)
-        documents.append(doc)
-
-    return documents
+    return _search_results_to_documents(search_result)
