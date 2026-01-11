@@ -60,10 +60,14 @@ async def aget_proposed_questions_for_party(
 
 
 async def aget_cached_answers_for_party(
-    party_id: str, cache_key: str
+    context_id: str, party_id: str, cache_key: str
 ) -> list[CachedResponse]:
+    """Get cached answers for a party within a context.
+
+    Path: cached_answers/{context_id}/parties/{party_id}/{cache_key}
+    """
     cached_answers = async_db.collection(
-        f"cached_answers/{party_id}/{cache_key}"
+        f"cached_answers/{context_id}/parties/{party_id}/{cache_key}"
     ).stream()
     return [
         CachedResponse(**cached_answer.to_dict())
@@ -72,10 +76,14 @@ async def aget_cached_answers_for_party(
 
 
 async def awrite_cached_answer_for_party(
-    party_id: str, cache_key: str, cached_answer: CachedResponse
+    context_id: str, party_id: str, cache_key: str, cached_answer: CachedResponse
 ) -> None:
+    """Write a cached answer for a party within a context.
+
+    Path: cached_answers/{context_id}/parties/{party_id}/{cache_key}
+    """
     cached_answer_ref = async_db.collection(
-        f"cached_answers/{party_id}/{cache_key}"
+        f"cached_answers/{context_id}/parties/{party_id}/{cache_key}"
     ).document()
     await cached_answer_ref.set(cached_answer.model_dump())
 
