@@ -34,6 +34,10 @@ service cloud.firestore {
     	allow read;
     }
 
+    match /cached_answers/{context_id}/{party_id}/{hash}/{cached_answer_id} {
+    	allow read;
+    }
+
     match /cached_answers/{document=**} {
     	allow read;
     }
