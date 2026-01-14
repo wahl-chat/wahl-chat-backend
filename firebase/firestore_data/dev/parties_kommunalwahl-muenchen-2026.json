@@ -1,0 +1,134 @@
+{
+    "spd": {
+        "party_id": "spd",
+        "name": "SPD",
+        "long_name": "Sozialdemokratische Partei Deutschlands",
+        "manifesto_url": null,
+        "candidate": "Dieter Reiter",
+        "website_url": "https://spd-muenchen.de",
+        "is_in_parliament": true,
+        "background_color": "#E4001B",
+        "logo_src": ""
+    },
+    "csu": {
+        "party_id": "csu",
+        "name": "CSU",
+        "long_name": "Christlich-Soziale Union in Bayern",
+        "manifesto_url": null,
+        "candidate": "Clemens Baumgärtner",
+        "website_url": "https://www.csu-muenchen.de",
+        "is_in_parliament": true,
+        "background_color": "#0080C8",
+        "logo_src": ""
+    },
+    "gruene": {
+        "party_id": "gruene",
+        "name": "Die Grünen",
+        "long_name": "Bündnis 90/Die Grünen",
+        "manifesto_url": null,
+        "candidate": "Dominik Krause",
+        "website_url": "https://gruene-muenchen.de",
+        "is_in_parliament": true,
+        "background_color": "#005438",
+        "logo_src": ""
+    },
+    "fdp": {
+        "party_id": "fdp",
+        "name": "FDP",
+        "long_name": "Freie Demokratische Partei",
+        "manifesto_url": null,
+        "candidate": "Jörg Hoffmann",
+        "website_url": "https://fdp-muenchen.de",
+        "is_in_parliament": true,
+        "background_color": "#FFED00",
+        "logo_src": ""
+    },
+    "linke": {
+        "party_id": "linke",
+        "name": "Die Linke",
+        "long_name": "Die Linke",
+        "manifesto_url": null,
+        "candidate": "Stefan Jagel",
+        "website_url": "https://www.dielinke-muenchen.de",
+        "is_in_parliament": true,
+        "background_color": "#FF0000",
+        "logo_src": ""
+    },
+    "oedp": {
+        "party_id": "oedp",
+        "name": "ÖDP",
+        "long_name": "Ökologisch-Demokratische Partei",
+        "manifesto_url": null,
+        "candidate": "Tobias Ruff",
+        "website_url": "https://www.oedp-muenchen.de",
+        "is_in_parliament": true,
+        "background_color": "#EB6416",
+        "logo_src": ""
+    },
+    "afd": {
+        "party_id": "afd",
+        "name": "AfD",
+        "long_name": "Alternative für Deutschland",
+        "manifesto_url": null,
+        "candidate": "Markus Walbrunn",
+        "website_url": "https://afd-muenchen.de",
+        "is_in_parliament": true,
+        "background_color": "#019EE0",
+        "logo_src": ""
+    },
+    "muenchen-liste": {
+        "party_id": "muenchen-liste",
+        "name": "München-Liste",
+        "long_name": "München-Liste",
+        "manifesto_url": null,
+        "candidate": "Dirk Höpner",
+        "website_url": "https://muenchen-liste.de",
+        "is_in_parliament": true,
+        "background_color": "#1E90FF",
+        "logo_src": ""
+    },
+    "fw": {
+        "party_id": "fw",
+        "name": "Freie Wähler",
+        "long_name": "Freie Wähler",
+        "manifesto_url": null,
+        "candidate": "Michael Piazolo",
+        "website_url": "https://fw-muenchen.de",
+        "is_in_parliament": false,
+        "background_color": "#FF8000",
+        "logo_src": ""
+    },
+    "volt": {
+        "party_id": "volt",
+        "name": "Volt",
+        "long_name": "Volt Deutschland",
+        "manifesto_url": null,
+        "candidate": "Felix Sproll",
+        "website_url": "https://voltdeutschland.org/muenchen",
+        "is_in_parliament": true,
+        "background_color": "#502379",
+        "logo_src": ""
+    },
+    "bayernpartei": {
+        "party_id": "bayernpartei",
+        "name": "Bayernpartei",
+        "long_name": "Bayernpartei",
+        "manifesto_url": null,
+        "candidate": "Richard Progl",
+        "website_url": "https://bayernpartei.de",
+        "is_in_parliament": true,
+        "background_color": "#0080FF",
+        "logo_src": ""
+    },
+    "die-partei": {
+        "party_id": "die-partei",
+        "name": "Die PARTEI",
+        "long_name": "Partei für Arbeit, Rechtsstaat, Tierschutz, Elitenförderung und basisdemokratische Initiative",
+        "manifesto_url": null,
+        "candidate": "Doppel-Wumms (Liliane Just / Philipp Drabinski)",
+        "website_url": "https://die-partei-muenchen.de",
+        "is_in_parliament": false,
+        "background_color": "#B5152B",
+        "logo_src": ""
+    }
+}
