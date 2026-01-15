@@ -16,7 +16,7 @@
         "long_name": "Christlich-Soziale Union in Bayern",
         "manifesto_url": null,
         "candidate": "Clemens Baumgärtner",
-        "website_url": "https://www.csu-muenchen.de",
+        "website_url": "https://www.csu.de/verbaende/bv/muenchen/",
         "is_in_parliament": true,
         "background_color": "#0080C8",
         "logo_src": ""
@@ -49,7 +49,7 @@
         "long_name": "Die Linke",
         "manifesto_url": null,
         "candidate": "Stefan Jagel",
-        "website_url": "https://www.dielinke-muenchen.de",
+        "website_url": "https://die-linke-muc.de",
         "is_in_parliament": true,
         "background_color": "#FF0000",
         "logo_src": ""
@@ -93,8 +93,8 @@
         "long_name": "Freie Wähler",
         "manifesto_url": null,
         "candidate": "Michael Piazolo",
-        "website_url": "https://fw-muenchen.de",
-        "is_in_parliament": false,
+        "website_url": "https://www.fwmuenchen.de",
+        "is_in_parliament": true,
         "background_color": "#FF8000",
         "logo_src": ""
     },
@@ -115,7 +115,7 @@
         "long_name": "Bayernpartei",
         "manifesto_url": null,
         "candidate": "Richard Progl",
-        "website_url": "https://bayernpartei.de",
+        "website_url": "https://bayernpartei.de/bezirksverband/muenchen/",
         "is_in_parliament": true,
         "background_color": "#0080FF",
         "logo_src": ""
@@ -126,8 +126,8 @@
         "long_name": "Partei für Arbeit, Rechtsstaat, Tierschutz, Elitenförderung und basisdemokratische Initiative",
         "manifesto_url": null,
         "candidate": "Doppel-Wumms (Liliane Just / Philipp Drabinski)",
-        "website_url": "https://die-partei-muenchen.de",
-        "is_in_parliament": false,
+        "website_url": "https://dieparteimuenchen.de",
+        "is_in_parliament": true,
         "background_color": "#B5152B",
         "logo_src": ""
     }

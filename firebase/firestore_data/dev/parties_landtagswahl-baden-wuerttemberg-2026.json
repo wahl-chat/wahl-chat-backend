@@ -70,8 +70,8 @@
         "name": "Freie Wähler",
         "long_name": "Freie Wähler Baden-Württemberg",
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/fw/wahlprogramm_2026-01-11.pdf",
-        "candidate": null,
-        "website_url": "https://www.fw-bw.de",
+        "candidate": "Sylvia Rolke",
+        "website_url": "https://freiewaehler-bw.de",
         "is_in_parliament": false,
         "background_color": "#FF8000",
         "logo_src": ""
@@ -115,7 +115,7 @@
         "long_name": "Volt Deutschland",
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/volt/wahlprogramm_2026-01-11.pdf",
         "candidate": null,
-        "website_url": "https://www.voltdeutschland.org/baden_wuerttemberg",
+        "website_url": "https://voltdeutschland.org/bw/",
         "is_in_parliament": false,
         "background_color": "#502379",
         "logo_src": ""
@@ -126,7 +126,7 @@
         "long_name": "Bündnis C – Christen für Deutschland",
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/buendnis-c/wahlprogramm_2026-01-11.pdf",
         "candidate": null,
-        "website_url": "https://buendnis-c.de/baden-wuerttemberg",
+        "website_url": "https://baden-wuerttemberg.buendnis-c.de",
         "is_in_parliament": false,
         "background_color": "#0033A0",
         "logo_src": ""
@@ -148,7 +148,7 @@
         "long_name": "Bündnis Sahra Wagenknecht – Vernunft und Gerechtigkeit",
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/bsw/wahlprogramm_2026-01-11.pdf",
         "candidate": null,
-        "website_url": "https://bsw-bw.de",
+        "website_url": "https://bw.bsw-vg.de",
         "is_in_parliament": false,
         "background_color": "#7B1E34",
         "logo_src": ""
@@ -159,31 +159,53 @@
         "long_name": "Die Gerechtigkeitspartei – Team Todenhöfer",
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/gerechtigkeit/wahlprogramm_2026-01-11.pdf",
         "candidate": null,
-        "website_url": "https://team-todenhofer.de",
+        "website_url": "https://gerechtigkeitspartei.de",
         "is_in_parliament": false,
         "background_color": "#1E90FF",
         "logo_src": ""
     },
-    "piraten": {
-        "party_id": "piraten",
-        "name": "Piraten",
-        "long_name": "Piratenpartei Deutschland",
-        "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/piraten/wahlprogramm_2026-01-11.pdf",
+    "pdr": {
+        "party_id": "pdr",
+        "name": "PDR",
+        "long_name": "Partei der Rentner",
+        "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/pdr/wahlprogramm_2026-01-15.pdf",
         "candidate": null,
-        "website_url": "https://piratenpartei-bw.de",
+        "website_url": "https://partei-der-rentner.de",
         "is_in_parliament": false,
-        "background_color": "#FA8909",
+        "background_color": "#ffffff",
         "logo_src": ""
     },
-    "buendnis-deutschland": {
-        "party_id": "buendnis-deutschland",
-        "name": "Bündnis Deutschland",
-        "long_name": "Bündnis Deutschland",
-        "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/buendnis-deutschland/wahlprogramm_2026-01-11.pdf",
+    "pdf": {
+        "party_id": "pdf",
+        "name": "PDF",
+        "long_name": "Partei des Fortschritts",
+        "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/pdf/wahlprogramm_2026-01-15.pdf",
         "candidate": null,
-        "website_url": "https://buendnis-deutschland.de",
+        "website_url": "https://partei-des-fortschritts.de/landesverband-baden-wuerttemberg/",
         "is_in_parliament": false,
-        "background_color": "#002B5C",
+        "background_color": "#ffffff",
+        "logo_src": ""
+    },
+    "tierschutzpartei": {
+        "party_id": "tierschutzpartei",
+        "name": "Tierschutzpartei",
+        "long_name": "Partei Mensch Umwelt Tierschutz",
+        "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/tierschutzpartei/grundsatzprogramm_2026-01-15.pdf",
+        "candidate": null,
+        "website_url": "https://www.tierschutzpartei.de/baden-wuerttemberg/",
+        "is_in_parliament": false,
+        "background_color": "#ffffff",
+        "logo_src": ""
+    },
+    "werteunion": {
+        "party_id": "werteunion",
+        "name": "WerteUnion",
+        "long_name": "WerteUnion",
+        "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/werteunion/wahlprogramm_2026-01-15.pdf",
+        "candidate": null,
+        "website_url": "https://bw-werteunion.de",
+        "is_in_parliament": false,
+        "background_color": "#ffffff",
         "logo_src": ""
     }
 }
