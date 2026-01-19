@@ -3,7 +3,7 @@
 import locale
 from datetime import date
 
-from langchain.prompts import (
+from langchain_core.prompts import (
     PromptTemplate,
 )
 
