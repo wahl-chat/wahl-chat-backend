@@ -62,6 +62,10 @@ service cloud.firestore {
     	allow read;
     }
 
+    match /proposed_questions/{context_id}/parties/{party_id}/questions/{question_id} {
+    	allow read;
+    }
+
     match /frequently_asked_questions/{question} {
     	allow read;
     }
