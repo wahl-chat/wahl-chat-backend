@@ -206,7 +206,10 @@ async def fetch_and_emit_party_response(
         # If not is_comparing_question, we do a single-party RAG
         if not is_comparing_question:
             improved_rag_query = await generate_improvement_rag_query(
-                party, conversation_history_str, question_for_party
+                party,
+                conversation_history_str,
+                question_for_party,
+                context_id=group_chat_session.context_id,
             )
             logger.debug(f"Improved RAG query: {improved_rag_query}")
 
@@ -468,7 +471,7 @@ async def process_party(
     )
 
     improved_rag_query = await generate_improvement_rag_query(
-        party, chat_history_str, general_question
+        party, chat_history_str, general_question, context_id=context_id
     )
 
     relevant_docs = await identify_relevant_docs_with_llm_based_reranking(

@@ -23,6 +23,8 @@ from src.llms import (
     get_structured_output_from_llms,
     stream_answer_from_llms,
 )
+from src.firebase_service import aget_context_by_id
+from src.models.context import DEFAULT_CONTEXT_ID
 from src.models.party import WAHL_CHAT_PARTY, Party
 from src.models.vote import Vote, VotingResultsByParty
 from src.utils import (
@@ -248,10 +250,18 @@ async def get_question_targets_and_type(
 
 
 async def generate_improvement_rag_query(
-    party: Party, conversation_history: str, last_user_message: str
+    party: Party,
+    conversation_history: str,
+    last_user_message: str,
+    context_id: str = DEFAULT_CONTEXT_ID,
 ) -> str:
     if party.party_id == WAHL_CHAT_PARTY.party_id:
-        system_prompt = system_prompt_improve_general_chat_rag_query_template.format()
+        # Fetch context to get the context name for the template
+        context = await aget_context_by_id(context_id)
+        context_name = context.name if context else "Bundestagswahl 2025"
+        system_prompt = system_prompt_improve_general_chat_rag_query_template.format(
+            context_name=context_name
+        )
     else:
         system_prompt = system_prompt_improvement_template.format(party_name=party.name)
     user_prompt = user_prompt_improvement_template.format(
