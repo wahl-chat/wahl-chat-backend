@@ -384,11 +384,18 @@ def add_source_document_to_firebase(
         context_id: The context identifier (e.g., 'bundestagswahl-2025')
         party_id: The party identifier (e.g., 'spd')
         source: The PartySource object with document metadata
+
+    Firestore path: sources/{context_id}/parties/{party_id}/documents/{document_id}
     """
     firestore_client: google.cloud.firestore.Client = firestore.client()
-    source_info_ref = firestore_client.collection(
-        f"sources/{context_id}/{party_id}/source_documents"
-    ).document(document_id)
+    source_info_ref = (
+        firestore_client.collection("sources")
+        .document(context_id)
+        .collection("parties")
+        .document(party_id)
+        .collection("documents")
+        .document(document_id)
+    )
 
     source_info_ref.set(source.model_dump())
 
@@ -402,11 +409,18 @@ def delete_source_document_from_firebase(
         document_id: The document identifier (filename without extension)
         context_id: The context identifier (e.g., 'bundestagswahl-2025')
         party_id: The party identifier (e.g., 'spd')
+
+    Firestore path: sources/{context_id}/parties/{party_id}/documents/{document_id}
     """
     firestore_client: google.cloud.firestore.Client = firestore.client()
-    source_info_ref = firestore_client.collection(
-        f"sources/{context_id}/{party_id}/source_documents"
-    ).document(document_id)
+    source_info_ref = (
+        firestore_client.collection("sources")
+        .document(context_id)
+        .collection("parties")
+        .document(party_id)
+        .collection("documents")
+        .document(document_id)
+    )
     source_info_ref.delete()
 
 
