@@ -138,6 +138,23 @@ async def _identify_relevant_documents(
     Returns:
         A list of relevant documents
     """
+    # Determine collection name
+    if context_id == DEFAULT_CONTEXT_ID:
+        collection_name = PARTY_INDEX_NAME
+    else:
+        collection_name = get_context_collection_name(context_id)
+
+    # Check if collection exists before trying to search
+    existing_collections = [
+        col.name for col in qdrant_client.get_collections().collections
+    ]
+    if collection_name not in existing_collections:
+        logger.warning(
+            f"Collection '{collection_name}' does not exist. "
+            f"No documents have been uploaded for context '{context_id}' yet."
+        )
+        return []
+
     # Get the vector store for this context
     vector_store = _get_vector_store_for_context(context_id)
 
