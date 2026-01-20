@@ -16,8 +16,8 @@ About page: https://wahl.chat/about-us </br>
 The aim of wahl.chat is to enable users to engage in a contemporary way with the positions of political parties and to receive answers to individual questions that can be substantiated with sources.
 
 #### Contributions welcome
-We appreciate contributions from our community. Please take a look at the open issues, if you are interested.  
-If you are unsure where to start, please contact robin@wahl.chat. 
+We appreciate contributions from our community. Please take a look at the open issues, if you are interested.
+If you are unsure where to start, please contact robin@wahl.chat.
 Further specifications coming soon.
 
 ## License
@@ -164,3 +164,59 @@ Firebase CLI: `npm install -g firebase-tools` & `firebase login`
 #### Moving Proposed Questions from dev to prod
 1. Export the proposed_questions collection from dev: `firestore-export --accountCredentials ../wahl-chat-dev-firebase-adminsdk.json --backupFile firestore_data/proposed_questions.json --nodePath proposed_questions -p`
 2. Import the proposed_questions collection to prod: `firestore-import --accountCredentials ../wahl-chat-firebase-adminsdk.json --backupFile firestore_data/proposed_questions.json --nodePath proposed_questions`
+
+### Seeding Contexts and Parties
+
+The application supports multiple election contexts (e.g., Bundestagswahl 2025, Landtagswahl Baden-Württemberg 2026). Each context has its own set of parties stored as a sub-collection.
+
+#### Data Structure
+
+```
+firebase/firestore_data/dev/
+├── contexts.json                                    # All contexts
+├── parties_bundestagswahl-2025.json                 # Parties for BTW 2025
+├── parties_landtagswahl-baden-wuerttemberg-2026.json # Parties for LTW BW 2026
+└── parties_kommunalwahl-muenchen-2026.json          # Parties for KW München 2026
+```
+
+#### Firestore Structure
+
+```
+contexts/{context_id}
+├── context_id, name, type, date, ...
+└── parties/{party_id}
+    └── party_id, name, long_name, manifesto_url, candidate, ...
+```
+
+#### Seeding with the Python Script (Recommended)
+
+Run from the project root:
+
+```bash
+python scripts/seed_firestore.py
+```
+
+This script:
+1. Reads `contexts.json` and imports all contexts
+2. Finds all `parties_*.json` files and imports them into the corresponding `contexts/{context_id}/parties` sub-collections
+
+For production:
+```bash
+ENV=prod python scripts/seed_firestore.py
+```
+
+#### Seeding with firestore-import (Manual)
+
+```bash
+# Seed contexts
+firestore-import -a wahl-chat-dev-firebase-adminsdk.json -n contexts -b firebase/firestore_data/dev/contexts.json -y
+
+# Seed parties for a specific context
+firestore-import -a wahl-chat-dev-firebase-adminsdk.json -n contexts/bundestagswahl-2025/parties -b firebase/firestore_data/dev/parties_bundestagswahl-2025.json -y
+```
+
+#### Adding a New Context
+
+1. Add the context to `firebase/firestore_data/dev/contexts.json`
+2. Create `firebase/firestore_data/dev/parties_{context_id}.json` with the parties
+3. Run `python scripts/seed_firestore.py`

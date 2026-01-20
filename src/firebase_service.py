@@ -7,7 +7,7 @@ from firebase_admin import firestore, credentials, firestore_async
 from pathlib import Path
 
 from src.models.chat import CachedResponse
-from src.models.context import Context, ContextParty
+from src.models.context import Context, ContextParty, DEFAULT_CONTEXT_ID
 from src.models.party import Party
 from src.utils import load_env
 
@@ -98,12 +98,9 @@ async def aget_context_by_id(context_id: str) -> Optional[Context]:
 
 
 async def aget_default_context() -> Optional[Context]:
-    """Get the default context (is_default=True)."""
+    """Get the default context (default context id)."""
     contexts = (
-        async_db.collection("contexts")
-        .where("is_default", "==", True)
-        .limit(1)
-        .stream()
+        async_db.collection("contexts").document(DEFAULT_CONTEXT_ID).limit(1).stream()
     )
     async for context in contexts:
         return Context(**context.to_dict())

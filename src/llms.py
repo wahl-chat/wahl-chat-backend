@@ -112,7 +112,7 @@ RESPONSE_GENERATION_LLMS: list[LLM] = [
         name="openai-gpt-4o-mini",
         model=openai_gpt_4o_mini,
         sizes=[LLMSize.SMALL],
-        priority=40,
+        priority=200,
         is_at_rate_limit=False,
     ),
 ]
