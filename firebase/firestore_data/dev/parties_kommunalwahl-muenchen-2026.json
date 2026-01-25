@@ -6,7 +6,7 @@
         "manifesto_url": null,
         "candidate": "Dieter Reiter",
         "website_url": "https://spd-muenchen.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#E4001B",
         "logo_src": ""
     },
@@ -17,8 +17,8 @@
         "manifesto_url": null,
         "candidate": "Clemens Baumgärtner",
         "website_url": "https://www.csu.de/verbaende/bv/muenchen/",
-        "is_in_parliament": true,
-        "background_color": "#0080C8",
+        "is_already_in_parliament": true,
+        "background_color": "#ffffff",
         "logo_src": ""
     },
     "gruene": {
@@ -28,7 +28,7 @@
         "manifesto_url": null,
         "candidate": "Dominik Krause",
         "website_url": "https://gruene-muenchen.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#005438",
         "logo_src": ""
     },
@@ -39,7 +39,7 @@
         "manifesto_url": null,
         "candidate": "Jörg Hoffmann",
         "website_url": "https://fdp-muenchen.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#FFED00",
         "logo_src": ""
     },
@@ -50,7 +50,7 @@
         "manifesto_url": null,
         "candidate": "Stefan Jagel",
         "website_url": "https://die-linke-muc.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#FF0000",
         "logo_src": ""
     },
@@ -61,7 +61,7 @@
         "manifesto_url": null,
         "candidate": "Tobias Ruff",
         "website_url": "https://www.oedp-muenchen.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#EB6416",
         "logo_src": ""
     },
@@ -72,7 +72,7 @@
         "manifesto_url": null,
         "candidate": "Markus Walbrunn",
         "website_url": "https://afd-muenchen.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#019EE0",
         "logo_src": ""
     },
@@ -83,8 +83,8 @@
         "manifesto_url": null,
         "candidate": "Dirk Höpner",
         "website_url": "https://muenchen-liste.de",
-        "is_in_parliament": true,
-        "background_color": "#1E90FF",
+        "is_already_in_parliament": true,
+        "background_color": "#ffffff",
         "logo_src": ""
     },
     "fw": {
@@ -94,8 +94,8 @@
         "manifesto_url": null,
         "candidate": "Michael Piazolo",
         "website_url": "https://www.fwmuenchen.de",
-        "is_in_parliament": true,
-        "background_color": "#FF8000",
+        "is_already_in_parliament": true,
+        "background_color": "#ffffff",
         "logo_src": ""
     },
     "volt": {
@@ -105,7 +105,7 @@
         "manifesto_url": null,
         "candidate": "Felix Sproll",
         "website_url": "https://voltdeutschland.org/muenchen",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#502379",
         "logo_src": ""
     },
@@ -116,8 +116,8 @@
         "manifesto_url": null,
         "candidate": "Richard Progl",
         "website_url": "https://bayernpartei.de/bezirksverband/muenchen/",
-        "is_in_parliament": true,
-        "background_color": "#0080FF",
+        "is_already_in_parliament": true,
+        "background_color": "#0030DD",
         "logo_src": ""
     },
     "die-partei": {
@@ -127,8 +127,8 @@
         "manifesto_url": null,
         "candidate": "Doppel-Wumms (Liliane Just / Philipp Drabinski)",
         "website_url": "https://dieparteimuenchen.de",
-        "is_in_parliament": true,
-        "background_color": "#B5152B",
+        "is_already_in_parliament": true,
+        "background_color": "#ffffff",
         "logo_src": ""
     }
 }

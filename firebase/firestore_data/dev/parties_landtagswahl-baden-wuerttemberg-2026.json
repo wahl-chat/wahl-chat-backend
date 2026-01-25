@@ -6,7 +6,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/gruene/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": "Cem Özdemir",
         "website_url": "https://www.gruene-bw.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#005438",
         "logo_src": ""
     },
@@ -17,7 +17,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/cdu/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": "Manuel Hagel",
         "website_url": "https://www.cdu-bw.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#000000",
         "logo_src": ""
     },
@@ -28,7 +28,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/spd/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": "Andreas Stoch",
         "website_url": "https://www.spd-bw.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#E4001B",
         "logo_src": ""
     },
@@ -39,7 +39,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/fdp/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": "Dr. Hans-Ulrich Rülke",
         "website_url": "https://www.fdp-bw.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#FFED00",
         "logo_src": ""
     },
@@ -50,7 +50,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/afd/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": "Markus Frohnmaier",
         "website_url": "https://www.afd-bw.de",
-        "is_in_parliament": true,
+        "is_already_in_parliament": true,
         "background_color": "#019EE0",
         "logo_src": ""
     },
@@ -61,7 +61,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/linke/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": "Kim Sophie Bohnen, Amelie Vollmer, Mersedeh Ghazaei",
         "website_url": "https://www.die-linke-bw.de",
-        "is_in_parliament": false,
+        "is_already_in_parliament": false,
         "background_color": "#FF0000",
         "logo_src": ""
     },
@@ -72,8 +72,8 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/fw/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": "Sylvia Rolke",
         "website_url": "https://freiewaehler-bw.de",
-        "is_in_parliament": false,
-        "background_color": "#FF8000",
+        "is_already_in_parliament": false,
+        "background_color": "#ffffff",
         "logo_src": ""
     },
     "die-partei": {
@@ -83,8 +83,8 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/die-partei/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": null,
         "website_url": "https://die-partei-bw.de",
-        "is_in_parliament": false,
-        "background_color": "#B5152B",
+        "is_already_in_parliament": false,
+        "background_color": "#ffffff",
         "logo_src": ""
     },
     "basis": {
@@ -94,8 +94,8 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/basis/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": null,
         "website_url": "https://diebasis-bw.de",
-        "is_in_parliament": false,
-        "background_color": "#E6007E",
+        "is_already_in_parliament": false,
+        "background_color": "#ffffff",
         "logo_src": ""
     },
     "oedp": {
@@ -105,7 +105,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/oedp/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": null,
         "website_url": "https://www.oedp-bw.de",
-        "is_in_parliament": false,
+        "is_already_in_parliament": false,
         "background_color": "#EB6416",
         "logo_src": ""
     },
@@ -116,7 +116,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/volt/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": null,
         "website_url": "https://voltdeutschland.org/bw/",
-        "is_in_parliament": false,
+        "is_already_in_parliament": false,
         "background_color": "#502379",
         "logo_src": ""
     },
@@ -127,8 +127,8 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/buendnis-c/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": null,
         "website_url": "https://baden-wuerttemberg.buendnis-c.de",
-        "is_in_parliament": false,
-        "background_color": "#0033A0",
+        "is_already_in_parliament": false,
+        "background_color": "#ffffff",
         "logo_src": ""
     },
     "verjuengung": {
@@ -138,7 +138,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/verjuengung/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": null,
         "website_url": "https://verjuengungsforschung.de",
-        "is_in_parliament": false,
+        "is_already_in_parliament": false,
         "background_color": "#00BFFF",
         "logo_src": ""
     },
@@ -149,8 +149,8 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/bsw/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": null,
         "website_url": "https://bw.bsw-vg.de",
-        "is_in_parliament": false,
-        "background_color": "#7B1E34",
+        "is_already_in_parliament": false,
+        "background_color": "#ffffff",
         "logo_src": ""
     },
     "gerechtigkeit": {
@@ -160,7 +160,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/gerechtigkeit/Wahlprogramm-Baden-Wuerttemberg_2026-01-20.pdf",
         "candidate": null,
         "website_url": "https://gerechtigkeitspartei.de",
-        "is_in_parliament": false,
+        "is_already_in_parliament": false,
         "background_color": "#1E90FF",
         "logo_src": ""
     },
@@ -170,8 +170,8 @@
         "long_name": "Partei der Rentner",
         "candidate": null,
         "website_url": "https://partei-der-rentner.de",
-        "is_in_parliament": false,
-        "background_color": "#ffffff",
+        "is_already_in_parliament": false,
+        "background_color": "#7f6aaf",
         "logo_src": ""
     },
     "pdf": {
@@ -180,7 +180,7 @@
         "long_name": "Partei des Fortschritts",
         "candidate": null,
         "website_url": "https://partei-des-fortschritts.de/landesverband-baden-wuerttemberg/",
-        "is_in_parliament": false,
+        "is_already_in_parliament": false,
         "background_color": "#ffffff",
         "logo_src": ""
     },
@@ -190,8 +190,8 @@
         "long_name": "Partei Mensch Umwelt Tierschutz",
         "candidate": null,
         "website_url": "https://www.tierschutzpartei.de/baden-wuerttemberg/",
-        "is_in_parliament": false,
-        "background_color": "#ffffff",
+        "is_already_in_parliament": false,
+        "background_color": "#00555F",
         "logo_src": ""
     },
     "werteunion": {
@@ -201,7 +201,7 @@
         "manifesto_url": "https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app/public/landtagswahl-baden-wuerttemberg-2026/werteunion/wahlprogramm_2026-01-15.pdf",
         "candidate": null,
         "website_url": "https://bw-werteunion.de",
-        "is_in_parliament": false,
+        "is_already_in_parliament": false,
         "background_color": "#ffffff",
         "logo_src": ""
     }
