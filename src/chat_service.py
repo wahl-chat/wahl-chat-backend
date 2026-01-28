@@ -302,6 +302,7 @@ async def fetch_and_emit_party_response(
                 relevant_docs_list or [],
                 all_parties=all_available_parties,
                 chat_response_llm_size=group_chat_session.chat_response_llm_size,
+                context_id=group_chat_session.context_id,
                 use_premium_llms=use_premium_llms,
             )
         else:

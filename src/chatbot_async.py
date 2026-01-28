@@ -34,6 +34,7 @@ from src.utils import (
     load_env,
 )
 from src.prompts import (
+    build_prompt_context,
     get_chat_answer_guidelines,
     get_wahl_chat_answer_guidelines,
     get_swiper_answer_guidelines,
@@ -421,6 +422,7 @@ async def generate_streaming_chatbot_response(
     relevant_docs: List[Document],
     all_parties: list[Party],
     chat_response_llm_size: LLMSize,
+    context_id: str = DEFAULT_CONTEXT_ID,
     use_premium_llms: bool = False,
 ) -> AsyncIterator[BaseMessageChunk]:
     rag_context = get_rag_context(relevant_docs)
@@ -428,6 +430,10 @@ async def generate_streaming_chatbot_response(
     now = datetime.now()
 
     if party.party_id == WAHL_CHAT_PARTY.party_id:
+        # Fetch context to get the context fields for the template
+        context = await aget_context_by_id(context_id)
+        prompt_context = build_prompt_context(context) if context else {}
+
         answer_guidelines = get_wahl_chat_answer_guidelines()
         all_parties_list = ""
         for p in all_parties:
@@ -438,6 +444,11 @@ async def generate_streaming_chatbot_response(
                 f"Spitzenkandidat*In für die Bundestagswahl 2025: {p.candidate}\n"
             )
         system_prompt = wahl_chat_response_system_prompt_template.format(
+            context_name=prompt_context.get("context_name", "Bundestagswahl 2025"),
+            context_date_info=prompt_context.get(
+                "context_date_info", "Kein spezifisches Datum"
+            ),
+            context_location=prompt_context.get("context_location", "Deutschland"),
             all_parties_list=all_parties_list,
             date=now.strftime("%Y-%m-%d"),
             time=now.strftime("%H:%M"),
