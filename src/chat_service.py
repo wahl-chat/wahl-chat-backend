@@ -334,7 +334,8 @@ async def fetch_and_emit_party_response(
             else:
                 full_response += message_chunk
 
-            chunk_text = message_chunk.content
+            # Use text instead of content attribute to deal with new response structure of Gemini-3 (https://docs.langchain.com/oss/python/integrations/chat/google_generative_ai#invocation)
+            chunk_text = message_chunk.text
             for i in range(0, len(chunk_text), MAX_RESPONSE_CHUNK_LENGTH):
                 if i > 0:
                     # Sleep for a short time to simulate processing time
@@ -372,7 +373,7 @@ async def fetch_and_emit_party_response(
         if full_response is None:
             full_response_text = ""
         else:
-            full_response_text = full_response.content
+            full_response_text = full_response.text
 
         full_response_text = sanitize_references(full_response_text)
 
