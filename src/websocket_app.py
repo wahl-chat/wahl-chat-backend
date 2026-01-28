@@ -528,15 +528,22 @@ async def get_voting_behavior(sid: str, body: dict):
             )
             chunk_index = 0
             async for chunk in summary_stream:
-                chunk_content = chunk.content
+                chunk_content = chunk.text
                 if isinstance(chunk_content, str):
-                    complete_message += chunk_content
+                    text_content = chunk_content
+                else:
+                    logger.warning(
+                        f"Unexpected chunk content type: {type(chunk_content)}"
+                    )
+                    continue
 
-                for i in range(0, len(chunk_content), MAX_RESPONSE_CHUNK_LENGTH):
+                complete_message += text_content
+
+                for i in range(0, len(text_content), MAX_RESPONSE_CHUNK_LENGTH):
                     if i > 0:
                         # Sleep for a short time to simulate processing time
                         await asyncio.sleep(0.025)
-                    split_chunk_content = chunk_content[
+                    split_chunk_content = text_content[
                         i : i + MAX_RESPONSE_CHUNK_LENGTH
                     ]
                     summary_chunk_dto = VotingBehaviorSummaryChunkDto(
