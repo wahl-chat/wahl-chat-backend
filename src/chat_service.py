@@ -25,7 +25,7 @@ from src.chatbot_async import (
 )
 from src.firebase_service import (
     aget_cached_answers_for_party,
-    aget_parties,
+    aget_parties_for_context,
     aget_proposed_questions_for_party,
     awrite_cached_answer_for_party,
 )
@@ -40,7 +40,8 @@ from src.models.dtos import (
     Status,
     StatusIndicator,
 )
-from src.models.party import WAHL_CHAT_PARTY, Party
+from src.models.context import ContextParty
+from src.models.party import WAHL_CHAT_PARTY
 from src.vector_store_helper import identify_relevant_docs_with_llm_based_reranking
 from src.utils import (
     build_chat_history_string,
@@ -56,7 +57,7 @@ logger = logging.getLogger(__name__)
 async def emit_cached_party_response(
     sio: socketio.AsyncServer,
     sid: str,
-    party: Party,
+    party: ContextParty,
     group_chat_session: GroupChatSession,
     cached_response: CachedResponse,
 ):
@@ -130,16 +131,16 @@ async def emit_cached_party_response(
 async def fetch_and_emit_party_response(
     sio: socketio.AsyncServer,
     sid: str,
-    party: Party,
+    party: ContextParty,
     conversation_history_str: str,
     question_for_party: str,
     group_chat_session: GroupChatSession,
-    all_available_parties: List[Party],
+    all_available_parties: List[ContextParty],
     use_premium_llms: bool,
     is_proposed_question: bool = False,
     is_cacheable_chat: bool = True,
     relevant_docs: Optional[Union[List[Document], Dict[str, List[Document]]]] = None,
-    parties_being_compared: Optional[List[Party]] = None,
+    parties_being_compared: Optional[List[ContextParty]] = None,
     is_comparing_question: bool = False,
     improved_rag_query_list: List[str] = [],
 ):
@@ -458,7 +459,7 @@ async def fetch_and_emit_party_response(
 
 
 async def process_party(
-    party: Party,
+    party: ContextParty,
     chat_history_str: str,
     general_question: str,
     relevant_doc_dict: Dict[str, List[Document]],
@@ -559,7 +560,7 @@ async def generate_chat_answer(
         )
         return
 
-    all_parties = await aget_parties()
+    all_parties = await aget_parties_for_context(chat_session.context_id)
     pre_selected_parties = [
         party for party in all_parties if party.party_id in party_ids
     ]

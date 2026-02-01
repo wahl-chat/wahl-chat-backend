@@ -8,7 +8,6 @@ from pathlib import Path
 
 from src.models.chat import CachedResponse
 from src.models.context import Context, ContextParty, DEFAULT_CONTEXT_ID
-from src.models.party import Party
 from src.utils import load_env
 
 load_env()
@@ -33,16 +32,18 @@ db = firestore.client()
 async_db = firestore_async.client()
 
 
-async def aget_parties() -> list[Party]:
+async def aget_parties() -> list[ContextParty]:
+    """Deprecated: Use aget_parties_for_context instead."""
     parties = async_db.collection("parties").stream()
-    return [Party(**party.to_dict()) async for party in parties]
+    return [ContextParty(**party.to_dict()) async for party in parties]
 
 
-async def aget_party_by_id(party_id: str) -> Optional[Party]:
+async def aget_party_by_id(party_id: str) -> Optional[ContextParty]:
+    """Deprecated: Use aget_party_for_context instead."""
     party_ref = async_db.collection("parties").document(party_id)
     party = await party_ref.get()
     if party.exists:
-        return Party(**party.to_dict())
+        return ContextParty(**party.to_dict())
     return None
 
 

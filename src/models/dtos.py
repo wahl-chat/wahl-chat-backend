@@ -9,7 +9,7 @@ from typing import List, Optional
 from src.models.general import LLMSize
 from src.models.vote import Vote
 from .chat import Message
-from .party import Party
+from .context import ContextParty
 
 
 class CreateSessionRequest(BaseModel):
@@ -27,7 +27,7 @@ class ChatAnswerRequest(BaseModel):
 
 class GroupChatDto(BaseModel):
     chat_history: List[Message] = Field(..., description="The chat history")
-    pre_selected_parties: List[Party] = Field(
+    pre_selected_parties: List[ContextParty] = Field(
         ..., description="The pre selected parties"
     )
 

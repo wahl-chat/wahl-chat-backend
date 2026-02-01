@@ -10,7 +10,7 @@ from langchain_qdrant import QdrantVectorStore
 from langchain_core.documents import Document
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
-from src.models.party import Party
+from src.models.context import ContextParty
 
 from src.utils import load_env, safe_load_api_key
 
@@ -181,7 +181,7 @@ async def _identify_relevant_documents(
 
 
 async def identify_relevant_docs(
-    party: Party,
+    party: ContextParty,
     rag_query: str,
     n_docs: int = 5,
     score_threshold: float = 0.5,
@@ -209,7 +209,7 @@ async def identify_relevant_docs(
 
 
 async def identify_relevant_docs_with_reranking(
-    party: Party,
+    party: ContextParty,
     rag_query: str,
     n_docs: int = 20,
     score_threshold: float = 0.5,
@@ -241,7 +241,7 @@ async def identify_relevant_docs_with_reranking(
 
 
 async def identify_relevant_docs_with_llm_based_reranking(
-    party: Party,
+    party: ContextParty,
     rag_query: str,
     chat_history: str,
     user_message: str,
@@ -321,7 +321,7 @@ async def identify_relevant_votes(
 
 
 async def identify_relevant_parliamentary_questions(
-    party: Union[Party, str],
+    party: Union[ContextParty, str],
     rag_query: str,
     n_docs: int = 5,
     score_threshold: float = 0.7,
@@ -331,7 +331,7 @@ async def identify_relevant_parliamentary_questions(
 
     Note: Parliamentary questions are stored in a separate collection and are not context-scoped.
     """
-    namespace = f"{party.party_id if isinstance(party, Party) else party}-parliamentary-questions"
+    namespace = f"{party.party_id if isinstance(party, ContextParty) else party}-parliamentary-questions"
 
     # Parliamentary questions use a separate collection, not context-scoped
     query_vector = await embed.aembed_query(rag_query)

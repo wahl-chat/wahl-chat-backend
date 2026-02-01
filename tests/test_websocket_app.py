@@ -26,7 +26,7 @@ from src.models.dtos import (
     StatusIndicator,
     SummaryDto,
 )
-from src.models.party import Party
+from src.models.context import ContextParty
 from src.models.chat import Message
 from src.utils import load_env
 
@@ -270,23 +270,23 @@ async def test_home_response(client: socketio.Client):
 async def test_get_chat_answer(client: socketio.Client, test_helpers: TestHelpers):
     """Test the get_chat_answer endpoint."""
     mock_parties = [
-        Party(
+        ContextParty(
             party_id="spd",
             name="SPD",
             long_name="Sozialdemokratische Partei Deutschlands",
             description="Die SPD ist eine sozialdemokratische Partei in Deutschland.",
             website_url="https://www.spd.de/",
             candidate="Olaf Scholz",
-            election_manifesto_url="https://www.spd.de/manifesto",
+            manifesto_url="https://www.spd.de/manifesto",
         ),
-        Party(
+        ContextParty(
             party_id="gruene",
             name="Bündnis 90/Die Grünen",
             long_name="Bündnis 90/Die Grünen",
             description="Die Grünen sind eine politische Partei in Deutschland.",
             website_url="https://www.gruene.de",
             candidate="Annalena Baerbock",
-            election_manifesto_url="https://www.gruene.de/manifesto",
+            manifesto_url="https://www.gruene.de/manifesto",
         ),
     ]
 
@@ -318,23 +318,23 @@ async def test_get_specific_party_answer(
 ):
     """Test whether the correct party is selected for the response."""
     mock_parties = [
-        Party(
+        ContextParty(
             party_id="spd",
             name="SPD",
             long_name="Sozialdemokratische Partei Deutschlands",
             description="Die SPD ist eine sozialdemokratische Partei in Deutschland.",
             website_url="https://www.spd.de/",
             candidate="Olaf Scholz",
-            election_manifesto_url="https://www.spd.de/manifesto",
+            manifesto_url="https://www.spd.de/manifesto",
         ),
-        Party(
+        ContextParty(
             party_id="gruene",
             name="Bündnis 90/Die Grünen",
             long_name="Bündnis 90/Die Grünen",
             description="Die Grünen sind eine politische Partei in Deutschland.",
             website_url="https://www.gruene.de",
             candidate="Annalena Baerbock",
-            election_manifesto_url="https://www.gruene.de/manifesto",
+            manifesto_url="https://www.gruene.de/manifesto",
         ),
     ]
 
@@ -391,6 +391,7 @@ async def test_get_pro_con_perspective(client: socketio.Client):
     assert response
     pro_con_response_dto = ProConPerspectiveDto(**response)
     assert pro_con_response_dto.request_id == payload_dto.request_id
+    assert pro_con_response_dto.message is not None
     assert len(pro_con_response_dto.message.content) > 0
 
 
@@ -464,23 +465,23 @@ async def test_get_multiple_chat_answers(
 ):
     """Test getting multiple chat answers in a row."""
     mock_parties = [
-        Party(
+        ContextParty(
             party_id="spd",
             name="SPD",
             long_name="Sozialdemokratische Partei Deutschlands",
             description="Die SPD ist eine sozialdemokratische Partei in Deutschland.",
             website_url="https://www.spd.de/",
             candidate="Olaf Scholz",
-            election_manifesto_url="https://www.spd.de/manifesto",
+            manifesto_url="https://www.spd.de/manifesto",
         ),
-        Party(
+        ContextParty(
             party_id="gruene",
             name="Bündnis 90/Die Grünen",
             long_name="Bündnis 90/Die Grünen",
             description="Die Grünen sind eine politische Partei in Deutschland.",
             website_url="https://www.gruene.de",
             candidate="Annalena Baerbock",
-            election_manifesto_url="https://www.gruene.de/manifesto",
+            manifesto_url="https://www.gruene.de/manifesto",
         ),
     ]
 
@@ -522,23 +523,23 @@ async def test_send_invalid_user_message_objects(
     client: socketio.Client, test_helpers: TestHelpers
 ):
     mock_parties = [
-        Party(
+        ContextParty(
             party_id="spd",
             name="SPD",
             long_name="Sozialdemokratische Partei Deutschlands",
             description="Die SPD ist eine sozialdemokratische Partei in Deutschland.",
             website_url="https://www.spd.de/",
             candidate="Olaf Scholz",
-            election_manifesto_url="https://www.spd.de/manifesto",
+            manifesto_url="https://www.spd.de/manifesto",
         ),
-        Party(
+        ContextParty(
             party_id="gruene",
             name="Bündnis 90/Die Grünen",
             long_name="Bündnis 90/Die Grünen",
             description="Die Grünen sind eine politische Partei in Deutschland.",
             website_url="https://www.gruene.de",
             candidate="Annalena Baerbock",
-            election_manifesto_url="https://www.gruene.de/manifesto",
+            manifesto_url="https://www.gruene.de/manifesto",
         ),
     ]
 
@@ -606,23 +607,23 @@ async def test_get_comparing_chat_answer(
 ):
     """Test the get_chat_answer endpoint."""
     mock_parties = [
-        Party(
+        ContextParty(
             party_id="spd",
             name="SPD",
             long_name="Sozialdemokratische Partei Deutschlands",
             description="Die SPD ist eine sozialdemokratische Partei in Deutschland.",
             website_url="https://www.spd.de/",
             candidate="Olaf Scholz",
-            election_manifesto_url="https://www.spd.de/manifesto",
+            manifesto_url="https://www.spd.de/manifesto",
         ),
-        Party(
+        ContextParty(
             party_id="gruene",
             name="Bündnis 90/Die Grünen",
             long_name="Bündnis 90/Die Grünen",
             description="Die Grünen sind eine politische Partei in Deutschland.",
             website_url="https://www.gruene.de",
             candidate="Annalena Baerbock",
-            election_manifesto_url="https://www.gruene.de/manifesto",
+            manifesto_url="https://www.gruene.de/manifesto",
         ),
     ]
 
