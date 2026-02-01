@@ -7,6 +7,7 @@ from firebase_admin import firestore, credentials, firestore_async
 from pathlib import Path
 
 from src.models.chat import CachedResponse
+from src.models.context import Context, ContextParty, DEFAULT_CONTEXT_ID
 from src.models.party import Party
 from src.utils import load_env
 
@@ -74,3 +75,60 @@ async def awrite_cached_answer_for_party(
 async def awrite_llm_status(is_at_rate_limit: bool) -> None:
     llm_status_ref = async_db.collection("system_status").document("llm_status")
     await llm_status_ref.set({"is_at_rate_limit": is_at_rate_limit})
+
+
+# =============================================================================
+# Context Methods
+# =============================================================================
+
+
+async def aget_contexts() -> list[Context]:
+    """Get all contexts."""
+    contexts = async_db.collection("contexts").stream()
+    return [Context(**context.to_dict()) async for context in contexts]
+
+
+async def aget_context_by_id(context_id: str) -> Optional[Context]:
+    """Get a context by its ID."""
+    context_ref = async_db.collection("contexts").document(context_id)
+    context = await context_ref.get()
+    if context.exists:
+        return Context(**context.to_dict())
+    return None
+
+
+async def aget_default_context() -> Optional[Context]:
+    """Get the default context (default context id)."""
+    contexts = (
+        async_db.collection("contexts").document(DEFAULT_CONTEXT_ID).limit(1).stream()
+    )
+    async for context in contexts:
+        return Context(**context.to_dict())
+    return None
+
+
+async def aget_parties_for_context(context_id: str) -> list[ContextParty]:
+    """Get all parties for a context from the sub-collection."""
+    parties = (
+        async_db.collection("contexts")
+        .document(context_id)
+        .collection("parties")
+        .stream()
+    )
+    return [ContextParty(**party.to_dict()) async for party in parties]
+
+
+async def aget_party_for_context(
+    context_id: str, party_id: str
+) -> Optional[ContextParty]:
+    """Get a specific party from the context's sub-collection."""
+    party_ref = (
+        async_db.collection("contexts")
+        .document(context_id)
+        .collection("parties")
+        .document(party_id)
+    )
+    party = await party_ref.get()
+    if party.exists:
+        return ContextParty(**party.to_dict())
+    return None

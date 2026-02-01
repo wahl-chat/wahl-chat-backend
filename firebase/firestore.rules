@@ -18,11 +18,23 @@ service cloud.firestore {
       allow read;
     }
 
+    match /contexts/{context_id} {
+      allow read;
+
+      match /parties/{party_id} {
+        allow read;
+      }
+    }
+
     match /cached_answers/{id} {
     	allow read;
     }
 
     match /cached_answers/{party_id}/{hash}/{cached_answer_id} {
+    	allow read;
+    }
+
+    match /cached_answers/{context_id}/{party_id}/{hash}/{cached_answer_id} {
     	allow read;
     }
 
@@ -47,6 +59,10 @@ service cloud.firestore {
     }
 
     match /proposed_questions/{session_type}/questions/{question_id} {
+    	allow read;
+    }
+
+    match /proposed_questions/{context_id}/parties/{party_id}/questions/{question_id} {
     	allow read;
     }
 

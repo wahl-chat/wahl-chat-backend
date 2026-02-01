@@ -59,6 +59,9 @@ class ProConAssessment(BaseModel):
 
 class GroupChatSession(BaseModel):
     session_id: str = Field(..., description="The ID of the chat session")
+    context_id: str = Field(
+        ..., description="The ID of the context (e.g., 'bundestagswahl-2025')"
+    )
     chat_history: List[Message] = Field(..., description="The chat history")
     title: Optional[str] = Field(None, description="The chat title")
     chat_response_llm_size: LLMSize = Field(

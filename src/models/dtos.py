@@ -62,6 +62,10 @@ class InitChatSessionDto(BaseModel):
     is_cacheable: bool = Field(
         description="Whether the chat history is cacheable or not", default=True
     )
+    context_id: Optional[str] = Field(
+        default=None,
+        description="The ID of the context (e.g., 'bundestagswahl-2025'). Defaults to the default context if not provided.",
+    )
 
 
 class ChatSessionInitializedDto(BaseModel):
