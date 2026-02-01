@@ -8,7 +8,8 @@
         "website_url": "https://www.gruene-bw.de",
         "is_already_in_parliament": true,
         "background_color": "#005438",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": false
     },
     "cdu": {
         "party_id": "cdu",
@@ -19,7 +20,8 @@
         "website_url": "https://www.cdu-bw.de",
         "is_already_in_parliament": true,
         "background_color": "#000000",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": false
     },
     "spd": {
         "party_id": "spd",
@@ -30,7 +32,8 @@
         "website_url": "https://www.spd-bw.de",
         "is_already_in_parliament": true,
         "background_color": "#E4001B",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": false
     },
     "fdp": {
         "party_id": "fdp",
@@ -41,7 +44,8 @@
         "website_url": "https://www.fdp-bw.de",
         "is_already_in_parliament": true,
         "background_color": "#FFED00",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": false
     },
     "afd": {
         "party_id": "afd",
@@ -52,7 +56,8 @@
         "website_url": "https://www.afd-bw.de",
         "is_already_in_parliament": true,
         "background_color": "#019EE0",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": false
     },
     "linke": {
         "party_id": "linke",
@@ -63,7 +68,8 @@
         "website_url": "https://www.die-linke-bw.de",
         "is_already_in_parliament": false,
         "background_color": "#FF0000",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "fw": {
         "party_id": "fw",
@@ -74,7 +80,8 @@
         "website_url": "https://freiewaehler-bw.de",
         "is_already_in_parliament": false,
         "background_color": "#ffffff",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "die-partei": {
         "party_id": "die-partei",
@@ -85,7 +92,8 @@
         "website_url": "https://die-partei-bw.de",
         "is_already_in_parliament": false,
         "background_color": "#ffffff",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "basis": {
         "party_id": "basis",
@@ -96,7 +104,8 @@
         "website_url": "https://diebasis-bw.de",
         "is_already_in_parliament": false,
         "background_color": "#ffffff",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "oedp": {
         "party_id": "oedp",
@@ -107,7 +116,8 @@
         "website_url": "https://www.oedp-bw.de",
         "is_already_in_parliament": false,
         "background_color": "#EB6416",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "volt": {
         "party_id": "volt",
@@ -118,7 +128,8 @@
         "website_url": "https://voltdeutschland.org/bw/",
         "is_already_in_parliament": false,
         "background_color": "#502379",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "buendnis-c": {
         "party_id": "buendnis-c",
@@ -129,7 +140,8 @@
         "website_url": "https://baden-wuerttemberg.buendnis-c.de",
         "is_already_in_parliament": false,
         "background_color": "#ffffff",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "verjuengung": {
         "party_id": "verjuengung",
@@ -140,7 +152,8 @@
         "website_url": "https://verjuengungsforschung.de",
         "is_already_in_parliament": false,
         "background_color": "#00BFFF",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "bsw": {
         "party_id": "bsw",
@@ -151,7 +164,8 @@
         "website_url": "https://bw.bsw-vg.de",
         "is_already_in_parliament": false,
         "background_color": "#ffffff",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "gerechtigkeit": {
         "party_id": "gerechtigkeit",
@@ -162,7 +176,8 @@
         "website_url": "https://gerechtigkeitspartei.de",
         "is_already_in_parliament": false,
         "background_color": "#1E90FF",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "pdr": {
         "party_id": "pdr",
@@ -172,7 +187,8 @@
         "website_url": "https://partei-der-rentner.de",
         "is_already_in_parliament": false,
         "background_color": "#7f6aaf",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "pdf": {
         "party_id": "pdf",
@@ -182,7 +198,8 @@
         "website_url": "https://partei-des-fortschritts.de/landesverband-baden-wuerttemberg/",
         "is_already_in_parliament": false,
         "background_color": "#ffffff",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "tierschutzpartei": {
         "party_id": "tierschutzpartei",
@@ -192,7 +209,8 @@
         "website_url": "https://www.tierschutzpartei.de/baden-wuerttemberg/",
         "is_already_in_parliament": false,
         "background_color": "#00555F",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     },
     "werteunion": {
         "party_id": "werteunion",
@@ -203,6 +221,7 @@
         "website_url": "https://bw-werteunion.de",
         "is_already_in_parliament": false,
         "background_color": "#ffffff",
-        "logo_src": ""
+        "logo_src": "",
+        "is_small_party": true
     }
 }
