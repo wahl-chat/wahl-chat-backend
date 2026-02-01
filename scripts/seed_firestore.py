@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Seed Firestore with contexts and parties data.
+Seed Firestore with contexts, parties, and proposed questions data.
 
 Usage:
     python scripts/seed_firestore.py
@@ -9,11 +9,16 @@ This script:
 1. Imports all contexts from firebase/firestore_data/dev/contexts.json
 2. Imports parties from firebase/firestore_data/dev/parties_{context_id}.json
    into contexts/{context_id}/parties sub-collection
+3. Imports proposed questions from firebase/firestore_data/dev/proposed_questions_{context_id}.json
+   into contexts/{context_id}/proposed_questions sub-collection
 
 File naming convention:
 - contexts.json: Contains all context documents
 - parties_{context_id}.json: Contains parties for a specific context
   Example: parties_bundestagswahl-2025.json -> contexts/bundestagswahl-2025/parties/
+- proposed_questions_{context_id}.json: Contains proposed questions for a specific context
+  Example: proposed_questions_kommunalwahl-muenchen-2026.json
+           -> contexts/kommunalwahl-muenchen-2026/proposed_questions/
 """
 
 import json
@@ -112,6 +117,71 @@ def seed_parties(db):
     print(f"\nTotal parties seeded: {total_parties}")
 
 
+def seed_proposed_questions(db):
+    """Seed proposed_questions sub-collections for each context.
+
+    File naming convention:
+    - proposed_questions_{context_id}.json: Contains proposed questions for a specific context
+      Example: proposed_questions_kommunalwahl-muenchen-2026.json
+               -> contexts/kommunalwahl-muenchen-2026/proposed_questions/
+
+    The JSON structure uses paths like "proposed_questions/spd/questions/question_1"
+    which gets stored as nested sub-collections under the context.
+    """
+    # Find all proposed questions files matching pattern: proposed_questions_*.json
+    pq_files = list(DATA_DIR.glob("proposed_questions_*.json"))
+
+    if not pq_files:
+        print("\n⚠️  No proposed questions files found")
+        return
+
+    print(f"\n📁 Found {len(pq_files)} proposed questions files")
+    print("-" * 60)
+
+    total_questions = 0
+    for pq_file in sorted(pq_files):
+        # Extract context_id from filename: proposed_questions_{context_id}.json
+        context_id = pq_file.stem.replace("proposed_questions_", "")
+
+        with open(pq_file) as f:
+            questions_data = json.load(f)
+
+        print(f"\n  📂 {context_id} ({len(questions_data)} question entries)")
+
+        for path, question_data in questions_data.items():
+            # Path format: "proposed_questions/spd/questions/question_1"
+            # We need to create this under contexts/{context_id}/
+            path_parts = path.split("/")
+
+            # Build the document reference under the context
+            # contexts/{context_id}/proposed_questions/{party_id}/questions/{question_id}
+            # Start from the context document and build the full path
+            ref = db.collection("contexts").document(context_id)
+
+            # Navigate through the path parts alternating between collection and document
+            # Path parts: [proposed_questions, spd, questions, question_1]
+            # We need: .collection(proposed_questions).document(spd).collection(questions).document(question_1)
+            for i, part in enumerate(path_parts):
+                if i % 2 == 0:
+                    # Even index (0, 2, ...) = collection
+                    ref = ref.collection(part)
+                else:
+                    # Odd index (1, 3, ...) = document
+                    ref = ref.document(part)
+
+            # The path has 4 parts, so the final ref should be a document
+            # If path has odd number of parts, it would end on a collection (error)
+            if len(path_parts) % 2 != 0:
+                print(f"    ⚠️  Skipping invalid path (odd parts): {path}")
+                continue
+
+            ref.set(question_data)
+            print(f"    ✅ {path}")
+            total_questions += 1
+
+    print(f"\nTotal proposed questions seeded: {total_questions}")
+
+
 def main():
     print("=" * 60)
     print("Firestore Seed Script")
@@ -131,6 +201,9 @@ def main():
 
     # Seed parties for each context
     seed_parties(db)
+
+    # Seed proposed questions for each context
+    seed_proposed_questions(db)
 
     print("\n" + "=" * 60)
     print("✅ Seeding complete!")

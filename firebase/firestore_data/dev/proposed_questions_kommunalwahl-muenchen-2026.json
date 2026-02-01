@@ -12,7 +12,7 @@
     "proposed_questions/spd/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/spd/questions/question_4": {
         "location": "chat",
@@ -32,7 +32,7 @@
     "proposed_questions/csu/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/csu/questions/question_4": {
         "location": "chat",
@@ -52,7 +52,7 @@
     "proposed_questions/gruene/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/gruene/questions/question_4": {
         "location": "chat",
@@ -72,7 +72,7 @@
     "proposed_questions/fdp/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/fdp/questions/question_4": {
         "location": "chat",
@@ -92,7 +92,7 @@
     "proposed_questions/linke/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/linke/questions/question_4": {
         "location": "chat",
@@ -112,7 +112,7 @@
     "proposed_questions/oedp/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/oedp/questions/question_4": {
         "location": "chat",
@@ -132,7 +132,7 @@
     "proposed_questions/afd/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/afd/questions/question_4": {
         "location": "chat",
@@ -152,7 +152,7 @@
     "proposed_questions/muenchen-liste/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/muenchen-liste/questions/question_4": {
         "location": "chat",
@@ -172,7 +172,7 @@
     "proposed_questions/fw/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/fw/questions/question_4": {
         "location": "chat",
@@ -192,7 +192,7 @@
     "proposed_questions/volt/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/volt/questions/question_4": {
         "location": "chat",
@@ -212,7 +212,7 @@
     "proposed_questions/bayernpartei/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/bayernpartei/questions/question_4": {
         "location": "chat",
@@ -232,7 +232,7 @@
     "proposed_questions/die-partei/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/die-partei/questions/question_4": {
         "location": "chat",
@@ -252,7 +252,7 @@
     "proposed_questions/rosa-liste/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/rosa-liste/questions/question_4": {
         "location": "chat",
@@ -272,7 +272,7 @@
     "proposed_questions/group/questions/question_3": {
         "location": "chat",
         "topic": "Haushalt",
-        "content": "Wo wollt ihr Geld sparen?"
+        "content": "An welchen Stellen wollt ihr im Haushalt sparen?"
     },
     "proposed_questions/group/questions/question_4": {
         "location": "chat",
