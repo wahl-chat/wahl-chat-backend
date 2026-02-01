@@ -264,14 +264,14 @@
         "location": "chat",
         "content": "Kann ich das Abstimmverhalten der Parteien sehen?"
     },
-    "proposed_questions/wahl-chat/questions/home_question_2": {
+    "proposed_questions/wahl-chat/questions/question_7": {
         "topic": "wahl.chat",
-        "location": "home",
+        "location": "chat",
         "content": "Wie entstehen die Antworten?"
     },
-    "proposed_questions/wahl-chat/questions/home_question_3": {
+    "proposed_questions/wahl-chat/questions/question_6": {
         "topic": "wahl.chat",
-        "location": "home",
+        "location": "chat",
         "content": "Kann ich mehrere Parteien fragen?"
     },
     "proposed_questions/wahl-chat/questions/question_4": {
@@ -279,9 +279,9 @@
         "location": "chat",
         "content": "Wofür habe ich eine Erst- und eine Zweitstimme?"
     },
-    "proposed_questions/wahl-chat/questions/home_question_1": {
+    "proposed_questions/wahl-chat/questions/question_5": {
         "topic": "wahl.chat",
-        "location": "home",
+        "location": "chat",
         "content": "Was kann ich fragen?"
     },
     "proposed_questions/wahl-chat/questions/question_3": {
@@ -373,9 +373,5 @@
         "topic": "Bildung",
         "location": "chat",
         "content": "Wie will die Piratenpartei die Bildung verbessern?"
-    },
-    "metadata": {
-        "timestamp": "2025-11-06_11-28-39",
-        "ref": "proposed_questions"
     }
 }

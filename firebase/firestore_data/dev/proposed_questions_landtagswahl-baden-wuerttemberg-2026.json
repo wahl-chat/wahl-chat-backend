@@ -398,5 +398,20 @@
         "location": "chat",
         "topic": "Zukunft",
         "content": "Was ist eure Vision für ein fortschrittliches und zukunftsfähiges Baden-Württemberg?"
+    },
+    "proposed_questions/wahl-chat/questions/question_1": {
+        "topic": "wahl.chat",
+        "location": "chat",
+        "content": "Was kann ich fragen?"
+    },
+    "proposed_questions/wahl-chat/questions/question_2": {
+        "topic": "wahl.chat",
+        "location": "chat",
+        "content": "Kann ich mehrere Parteien miteinander vergleichen?"
+    },
+    "proposed_questions/wahl-chat/questions/question_3": {
+        "topic": "wahl.chat",
+        "location": "chat",
+        "content": "Wie entstehen die Antworten?"
     }
 }

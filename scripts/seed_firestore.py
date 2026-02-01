@@ -139,12 +139,24 @@ def seed_proposed_questions(db):
     print("-" * 60)
 
     total_questions = 0
+    failed_files = []
+    failed_writes = []
+
     for pq_file in sorted(pq_files):
         # Extract context_id from filename: proposed_questions_{context_id}.json
         context_id = pq_file.stem.replace("proposed_questions_", "")
 
-        with open(pq_file) as f:
-            questions_data = json.load(f)
+        try:
+            with open(pq_file) as f:
+                questions_data = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"\n  ❌ Failed to parse {pq_file.name}: {e}")
+            failed_files.append((pq_file.name, str(e)))
+            continue
+        except OSError as e:
+            print(f"\n  ❌ Failed to read {pq_file.name}: {e}")
+            failed_files.append((pq_file.name, str(e)))
+            continue
 
         print(f"\n  📂 {context_id} ({len(questions_data)} question entries)")
 
@@ -175,11 +187,25 @@ def seed_proposed_questions(db):
                 print(f"    ⚠️  Skipping invalid path (odd parts): {path}")
                 continue
 
-            ref.set(question_data)
-            print(f"    ✅ {path}")
-            total_questions += 1
+            try:
+                ref.set(question_data)
+                print(f"    ✅ {path}")
+                total_questions += 1
+            except Exception as e:
+                print(f"    ❌ Failed to write {path}: {e}")
+                failed_writes.append((context_id, path, str(e)))
 
     print(f"\nTotal proposed questions seeded: {total_questions}")
+
+    if failed_files:
+        print(f"\n⚠️  Failed to parse {len(failed_files)} file(s):")
+        for filename, error in failed_files:
+            print(f"    - {filename}: {error}")
+
+    if failed_writes:
+        print(f"\n⚠️  Failed to write {len(failed_writes)} document(s):")
+        for context_id, path, error in failed_writes:
+            print(f"    - {context_id}/{path}: {error}")
 
 
 def main():
