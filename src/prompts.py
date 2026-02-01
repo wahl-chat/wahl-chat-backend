@@ -347,13 +347,17 @@ Du analysierst eine Nachricht eines Nutzers an ein Chatsystem im Kontext des bis
 # Hintergrundinformationen
 Der Nutzer hat bereits folgende Gesprächspartner in den Chat eingeladen:
 {current_party_list}
+
 Es stehen dir zusätzlich folgende Gesprächspartner zur Auswahl:
 {additional_party_list}
 
 # Aufgabe
 Generiere eine Liste der IDs der Gesprächspartner, von denen der Nutzer am wahrscheinlichsten eine Antwort haben möchte.
 
-Wenn der Nutzer keine konkreten Gesprächspartner verlangt, möchte er eine Antwort genau von den Gesprächspartnern, die er in den Chat eingeladen hat.
+Wenn der Nutzer keine konkreten Gesprächspartner verlangt, möchte er eine Antwort genau von den Gesprächspartnern, die er in den Chat eingeladen hat. Dies ist die
+wichtigste Einschränkung. Wenn die originalen Gesprächspartner nicht mit der richtigen ID inkludiert sind stürzt das System ab!
+
+
 Wenn der Nutzer explizit alle Parteien fordert, gib alle Parteien die aktuell im Chat sind und alle großen Parteien an.
 Wähle Kleinparteien nur aus, wenn diese bereits in den Chat eingeladen wurden oder explizit gefordert werden.
 Beachte bei dieser Entscheidung ausschließlich die Parteien in den Hintergrundinformationen und NICHT die Parteien im bisherigen Chatverlauf.

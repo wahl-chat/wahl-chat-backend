@@ -39,6 +39,10 @@ class PartyID(StrEnum):
     OEDP = "oedp"
     TIERSCHUTZPARTEI = "tierschutzpartei"
     WAHL_CHAT = "wahl-chat"
+    MUENCHEN_LISTE = "muenchen-liste"
+    DIE_PARTEI = "die-partei"
+    ROSA_LISTE = "rosa-liste"
+    BAYERNPARTEI = "bayernpartei"
 
 
 class PartyListGenerator(BaseModel):

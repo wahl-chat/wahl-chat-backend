@@ -194,6 +194,10 @@ async def get_question_targets_and_type(
         previous_chat_history=previous_chat_history,
         user_message=user_message_for_target_selection,
     )
+
+    logger.debug("system_prompt: {}".format(system_prompt))
+    logger.debug("user_prompt: {}".format(user_prompt))
+
     messages = [
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt),
@@ -202,6 +206,7 @@ async def get_question_targets_and_type(
     response_targets = await get_structured_output_from_llms(
         generate_party_list_llms, messages, PartyListGenerator
     )
+    logger.debug(f"LLM response_targets: {response_targets}")
 
     party_id_list = getattr(response_targets, "party_id_list", [])
     logger.debug(f"LLM returned party ID list: {party_id_list}")
