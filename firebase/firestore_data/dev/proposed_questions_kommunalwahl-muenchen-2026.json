@@ -278,5 +278,25 @@
         "location": "chat",
         "topic": "Klima",
         "content": "Was tut ihr gegen das Hitzeproblem im Sommer in München?"
+    },
+    "proposed_questions/wahl-chat/questions/question_1": {
+        "topic": "wahl.chat",
+        "location": "chat",
+        "content": "Was muss ich beachten, dass meine Stimmabgabe gültig ist?"
+    },
+    "proposed_questions/wahl-chat/questions/question_2": {
+        "topic": "wahl.chat",
+        "location": "chat",
+        "content": "Was wird eigentlich bei der Kommunalwahl in München gewählt?"
+    },
+    "proposed_questions/wahl-chat/questions/question_3": {
+        "topic": "wahl.chat",
+        "location": "chat",
+        "content": "Warum habe ich drei Stimmzettel?"
+    },
+    "proposed_questions/wahl-chat/questions/question_4": {
+        "topic": "wahl.chat",
+        "location": "chat",
+        "content": "Wer kandidiert als OB-Kandidat/in für München?"
     }
 }

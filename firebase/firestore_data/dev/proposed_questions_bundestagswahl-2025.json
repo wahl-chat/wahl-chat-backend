@@ -117,7 +117,7 @@
     "proposed_questions/spd/questions/question_3": {
         "location": "chat",
         "topic": "Internationales",
-        "content": "Soll die Ukraine mit Taurus Raketen unterstützt werden?"
+        "content": "Wie steht die SPD zu Waffenlieferungen?"
     },
     "proposed_questions/bsw/questions/banner_question_1": {
         "location": "banner",
@@ -202,7 +202,7 @@
     "proposed_questions/gruene/questions/question_3": {
         "topic": "Wirtschaft",
         "location": "chat",
-        "content": "Wie soll die Schuldenbremse reformiert werden?"
+        "content": "Wie sollen Investitionen in grüne Technologien gefördert werden?"
     },
     "proposed_questions/gruene/questions/question_2": {
         "location": "chat",
@@ -222,7 +222,7 @@
     "proposed_questions/cdu/questions/question_1": {
         "topic": "Allgemeines",
         "location": "chat",
-        "content": "Was lief an der Ampel Regierung falsch?"
+        "content": "Was sieht die CDU als wichtigstes Problem, das es in Zukunft zu lösen gibt?"
     },
     "proposed_questions/cdu/questions/question_4": {
         "location": "chat",
