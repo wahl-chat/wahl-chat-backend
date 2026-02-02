@@ -355,8 +355,7 @@ Es stehen dir zusätzlich folgende Gesprächspartner zur Auswahl:
 Generiere eine Liste der IDs der Gesprächspartner, von denen der Nutzer am wahrscheinlichsten eine Antwort haben möchte.
 
 Wenn der Nutzer keine konkreten Gesprächspartner verlangt, möchte er eine Antwort genau von den Gesprächspartnern, die er in den Chat eingeladen hat. Dies ist die
-wichtigste Einschränkung. Wenn die originalen Gesprächspartner nicht mit der richtigen ID inkludiert sind stürzt das System ab!
-
+wichtigste Einschränkung. Wenn die originalen Gesprächspartner nicht mit der richtigen ID inkludiert sind, führt dies zu gravierenden Fehlern in der Antwortgenerierung!
 
 Wenn der Nutzer explizit alle Parteien fordert, gib alle Parteien die aktuell im Chat sind und alle großen Parteien an.
 Wähle Kleinparteien nur aus, wenn diese bereits in den Chat eingeladen wurden oder explizit gefordert werden.
