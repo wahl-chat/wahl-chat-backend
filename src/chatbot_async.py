@@ -73,17 +73,16 @@ from src.prompts import (
 
 from src.models.chat import Message
 from src.models.structured_outputs import (
-    PartyListGenerator,
     ChatSummaryGenerator,
     GroupChatTitleQuickReplyGenerator,
     QuestionTypeClassifier,
     RerankingOutput,
+    create_party_list_generator,
 )
 
 load_env()
 
 logger = logging.getLogger(__name__)
-
 
 chat_response_llms: list[LLM] = RESPONSE_GENERATION_LLMS
 
@@ -195,18 +194,18 @@ async def get_question_targets_and_type(
         user_message=user_message_for_target_selection,
     )
 
-    logger.debug("system_prompt: {}".format(system_prompt))
-    logger.debug("user_prompt: {}".format(user_prompt))
-
     messages = [
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt),
     ]
 
+    # Create dynamic PartyListGenerator with valid party IDs from context
+    valid_party_ids = [party.party_id for party in all_available_parties]
+    party_list_generator = create_party_list_generator(valid_party_ids)
+
     response_targets = await get_structured_output_from_llms(
-        generate_party_list_llms, messages, PartyListGenerator
+        generate_party_list_llms, messages, party_list_generator
     )
-    logger.debug(f"LLM response_targets: {response_targets}")
 
     party_id_list = getattr(response_targets, "party_id_list", [])
     logger.debug(f"LLM returned party ID list: {party_id_list}")
