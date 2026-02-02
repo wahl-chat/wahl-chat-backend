@@ -24,6 +24,10 @@ service cloud.firestore {
       match /parties/{party_id} {
         allow read;
       }
+
+      match /proposed_questions/{document=**} {
+        allow read;
+      }
     }
 
     match /cached_answers/{id} {
