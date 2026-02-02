@@ -14,7 +14,8 @@ from openai.types.chat import ChatCompletion
 import xxhash
 
 from src.models.chat import Message, Role
-from src.models.party import WAHL_CHAT_PARTY, Party
+from src.models.context import ContextParty
+from src.models.party import WAHL_CHAT_PARTY
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 EXPECTED_API_NAME = "wahl-chat-api"
@@ -76,7 +77,7 @@ def get_cors_allowed_origins(env: Optional[str]) -> Union[str, list[str]]:
 
 def build_chat_history_string(
     chat_history: list[Message],
-    parties: list[Party],
+    parties: list[ContextParty],
     default_assistant_name=WAHL_CHAT_PARTY.name,
 ) -> str:
     chat_history_string = ""
@@ -107,7 +108,7 @@ def build_document_string_for_context(
 """
 
 
-def build_party_str(party: Party):
+def build_party_str(party: ContextParty):
     return f"""ID: {party.party_id}
 - Abkürzung: {party.name}
 - Langform: {party.long_name}

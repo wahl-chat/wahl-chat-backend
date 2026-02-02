@@ -4,6 +4,7 @@
 
 from datetime import date as date_type
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -83,9 +84,13 @@ class ContextParty(BaseModel):
         None, description="Lead candidate (mainly for elections)"
     )
     website_url: str = Field(..., description="Party website URL")
-    is_in_parliament: bool = Field(
+    is_already_in_parliament: bool = Field(
         True, description="Whether the party is currently in parliament"
     )
+    is_small_party: bool = Field(
+        False, description="Whether the party is a small party"
+    )
+    description: Optional[str] = Field(None, description="Party description")
     background_color: str = Field(
         "#808080", description="Brand color for UI (hex format)"
     )

@@ -25,7 +25,8 @@ from src.llms import (
 )
 from src.firebase_service import aget_context_by_id
 from src.models.context import DEFAULT_CONTEXT_ID
-from src.models.party import WAHL_CHAT_PARTY, Party
+from src.models.context import ContextParty
+from src.models.party import WAHL_CHAT_PARTY
 from src.models.vote import Vote, VotingResultsByParty
 from src.utils import (
     build_document_string_for_context,
@@ -72,17 +73,16 @@ from src.prompts import (
 
 from src.models.chat import Message
 from src.models.structured_outputs import (
-    PartyListGenerator,
     ChatSummaryGenerator,
     GroupChatTitleQuickReplyGenerator,
     QuestionTypeClassifier,
     RerankingOutput,
+    create_party_list_generator,
 )
 
 load_env()
 
 logger = logging.getLogger(__name__)
-
 
 chat_response_llms: list[LLM] = RESPONSE_GENERATION_LLMS
 
@@ -149,8 +149,8 @@ async def rerank_documents(
 async def get_question_targets_and_type(
     user_message: str,
     previous_chat_history: str,
-    all_available_parties: List[Party],
-    currently_selected_parties: List[Party],
+    all_available_parties: List[ContextParty],
+    currently_selected_parties: List[ContextParty],
 ) -> Tuple[List[str], str, bool]:
     if len(currently_selected_parties) == 0:
         currently_selected_parties = [WAHL_CHAT_PARTY]
@@ -193,13 +193,18 @@ async def get_question_targets_and_type(
         previous_chat_history=previous_chat_history,
         user_message=user_message_for_target_selection,
     )
+
     messages = [
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt),
     ]
 
+    # Create dynamic PartyListGenerator with valid party IDs from context
+    valid_party_ids = [party.party_id for party in all_available_parties]
+    party_list_generator = create_party_list_generator(valid_party_ids)
+
     response_targets = await get_structured_output_from_llms(
-        generate_party_list_llms, messages, PartyListGenerator
+        generate_party_list_llms, messages, party_list_generator
     )
 
     party_id_list = getattr(response_targets, "party_id_list", [])
@@ -251,7 +256,7 @@ async def get_question_targets_and_type(
 
 
 async def generate_improvement_rag_query(
-    party: Party,
+    party: ContextParty,
     conversation_history: str,
     last_user_message: str,
     context_id: str = DEFAULT_CONTEXT_ID,
@@ -286,7 +291,7 @@ async def generate_improvement_rag_query(
 
 
 async def generate_pro_con_perspective(
-    chat_history: List[Message], party: Party
+    chat_history: List[Message], party: ContextParty
 ) -> Message:
     # from a list of Message elements, extract the last assistant and user message by checking the role
     last_assistant_message = next(
@@ -370,7 +375,7 @@ def get_rag_context(relevant_docs: List[Document]) -> str:
 
 
 def get_rag_comparison_context(
-    relevant_docs: Dict[str, List[Document]], relevant_parties: List[Party]
+    relevant_docs: Dict[str, List[Document]], relevant_parties: List[ContextParty]
 ) -> str:
     rag_context = ""
     doc_num = 0
@@ -394,7 +399,7 @@ def get_rag_comparison_context(
 
 
 async def get_improved_rag_query_voting_behavior(
-    party: Party, last_user_message: str, last_assistant_message: str
+    party: ContextParty, last_user_message: str, last_assistant_message: str
 ) -> str:
     system_prompt = system_prompt_improvement_rag_template_vote_behavior_summary.format(
         party_name=party.name
@@ -416,11 +421,11 @@ async def get_improved_rag_query_voting_behavior(
 
 
 async def generate_streaming_chatbot_response(
-    party: Party,
+    party: ContextParty,
     conversation_history: str,
     user_message: str,
     relevant_docs: List[Document],
-    all_parties: list[Party],
+    all_parties: list[ContextParty],
     chat_response_llm_size: LLMSize,
     context_id: str = DEFAULT_CONTEXT_ID,
     use_premium_llms: bool = False,
@@ -488,11 +493,11 @@ async def generate_streaming_chatbot_response(
 
 
 async def generate_streaming_chatbot_comparing_response(
-    party: Party,
+    party: ContextParty,
     conversation_history: str,
     user_message: str,
     relevant_docs: Dict[str, List[Document]],
-    relevant_parties: List[Party],
+    relevant_parties: List[ContextParty],
     chat_response_llm_size: LLMSize,
     use_premium_llms: bool = False,
 ) -> AsyncIterator[BaseMessageChunk]:
@@ -538,7 +543,7 @@ async def generate_streaming_chatbot_comparing_response(
 async def generate_chat_title_and_chick_replies(
     chat_history_str: str,
     chat_title: str,
-    parties_in_chat: List[Party],
+    parties_in_chat: List[ContextParty],
     wahl_chat_assistant_last_responded: bool = False,
     is_comparing: bool = False,
 ) -> GroupChatTitleQuickReplyGenerator:
@@ -586,7 +591,7 @@ async def generate_chat_title_and_chick_replies(
 
 
 async def generate_party_vote_behavior_summary(
-    party: Party,
+    party: ContextParty,
     last_user_message: str,
     last_assistant_message: str,
     votes: List[Vote],
