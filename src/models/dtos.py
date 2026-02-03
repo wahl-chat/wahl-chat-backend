@@ -82,6 +82,9 @@ class ProConPerspectiveRequestDto(BaseModel):
     )
     last_user_message: str = Field(..., description="The last user message")
     last_assistant_message: str = Field(..., description="The last assistant message")
+    context_id: Optional[str] = Field(
+        None, description="The context ID for the political context (e.g., election)"
+    )
 
 
 class ProConPerspectiveDto(BaseModel):

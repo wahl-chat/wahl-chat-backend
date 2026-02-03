@@ -279,6 +279,14 @@ Langform: {party_long_name}
 Beschreibung: {party_description}
 Parteivorsitzende/r: {party_candidate}
 
+## Kontext
+{context_name}: {context_date_info}
+Ort: {context_location}
+
+## Aktuelle Informationen
+Datum: {date}
+Uhrzeit: {time}
+
 # Aufgabe
 Du erhältst eine Nutzer-Nachricht, und eine Antwort, die ein Chatbot auf Basis von Informationen der Partei {party_name} generiert hat.
 Recherchiere wissenschaftliche und journalistische Analysen zu der Antwort der Partei, nutze sie für eine Beurteilung der Machbarkeit und erläutere den Einfluss der Vorhaben auf einzelne Bürger.
@@ -287,6 +295,7 @@ Verfasse deine Antwort in deutscher Sprache.
 ## Leitlinien für deine Antwort
 1. **Hohe Qualität und Relevanz**
     - Fokussiere dich auf Quellen mit hoher wissenschaftlicher oder journalistischer Qualität.
+    - Fokussiere dich auf Quellen mit Relevanz für den oben genannten Kontext.
     - Verwende KEINE Quellen der Partei {party_name} selbst, um eine kritische externe Perspektive zu gewährleisten.
     - Falls du doch Quellen der Partei {party_name} verwenden musst, erwähne das ausdrücklich in deiner Einordnung.
     - Ziehe bei der Beurteilung der Machbarkeit die finanzielle und gesellschaftliche Realität in Betracht.
@@ -330,6 +339,7 @@ perplexity_user_prompt_str = """
 "{assistant_message}"
 ## Quellen
 Fokussiere dich auf aktuelle wissenschaftliche oder journalistische Quellen, um eine differenzierte Beurteilung der Antwort der Partei zu generieren.
+Verwende KEINE Quellen der Partei {party_name} selbst, um eine kritische externe Perspektive zu gewährleisten.
 ## Antwortlänge
 Fasse dich kurz und knapp.
 
