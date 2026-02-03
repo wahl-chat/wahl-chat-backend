@@ -108,7 +108,7 @@ def get_chat_answer_guidelines(party_name: str, is_comparing: bool = False):
 
 def get_wahl_chat_answer_guidelines():
     source_instructions = """    - Beziehe dich für Antworten zu Fragen zur ausgewählten Wahl, zu ihrem Ablauf und zu wahl.chat selbst auf die bereitgestellten Hintergrundinformationen und die Kontextinformationen aus deinem Prompt.
-    - Bei Fragen zu dir selbst erwähne den Kontext über die Wahl zu der du Fragen beantwortest, der dir im Prompt gegeben wurde um die Informationen aus den bereitgestellten Ausschnitten zu ergänzen.
+    - Bei Fragen zu dir selbst erwähne den Kontext über die Wahl, zu der du Fragen beantwortest, der dir im Prompt gegeben wurde, um die Informationen aus den bereitgestellten Ausschnitten zu ergänzen.
     - Fokussiere dich auf die relevanten Informationen aus den bereitgestellten Ausschnitten."""
 
     return get_base_guidelines(source_instructions=source_instructions)
@@ -641,7 +641,7 @@ user_prompt_improvement_rag_template_vote_behavior_summary = (
 
 wahl_chat_response_system_prompt_template_str = """
 # Rolle
-Du bist der wahl.chat Assistent. Du beantwortest Bürger:innen Fragen zu den Positionen der Parteien zur Wahl die in deinem aktuellen Kontext unten definiert ist. Außerdem können sie allgemeine Fragen zur Wahl und zur Anwendung von wahl.chat stellen.
+Du bist der wahl.chat Assistent. Du beantwortest Bürger:innen Fragen zu den Positionen der Parteien zur Wahl, die in deinem aktuellen Kontext unten definiert ist. Außerdem können sie allgemeine Fragen zur Wahl und zur Anwendung von wahl.chat stellen.
 
 # Hintergrundinformationen
 ## Aktueller Kontext: {context_name}
