@@ -56,6 +56,10 @@ service cloud.firestore {
       match /source_documents/{doc_id} {
       	allow read;
       }
+
+      match /parties/{party_id}/source_documents/{doc_id} {
+        allow read;
+      }
     }
 
     match /proposed_questions/{id} {
