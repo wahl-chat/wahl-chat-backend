@@ -9,7 +9,7 @@ from typing import List, Optional
 from src.models.general import LLMSize
 from src.models.vote import Vote
 from .chat import Message
-from .party import Party
+from .context import ContextParty
 
 
 class CreateSessionRequest(BaseModel):
@@ -27,7 +27,7 @@ class ChatAnswerRequest(BaseModel):
 
 class GroupChatDto(BaseModel):
     chat_history: List[Message] = Field(..., description="The chat history")
-    pre_selected_parties: List[Party] = Field(
+    pre_selected_parties: List[ContextParty] = Field(
         ..., description="The pre selected parties"
     )
 
@@ -62,6 +62,10 @@ class InitChatSessionDto(BaseModel):
     is_cacheable: bool = Field(
         description="Whether the chat history is cacheable or not", default=True
     )
+    context_id: Optional[str] = Field(
+        default=None,
+        description="The ID of the context (e.g., 'bundestagswahl-2025'). Defaults to the default context if not provided.",
+    )
 
 
 class ChatSessionInitializedDto(BaseModel):
@@ -78,6 +82,9 @@ class ProConPerspectiveRequestDto(BaseModel):
     )
     last_user_message: str = Field(..., description="The last user message")
     last_assistant_message: str = Field(..., description="The last assistant message")
+    context_id: Optional[str] = Field(
+        None, description="The context ID for the political context (e.g., election)"
+    )
 
 
 class ProConPerspectiveDto(BaseModel):

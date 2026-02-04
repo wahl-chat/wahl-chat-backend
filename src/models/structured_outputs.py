@@ -2,8 +2,35 @@
 #
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 
-from enum import StrEnum
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+
+def create_party_list_generator(valid_party_ids: list[str]) -> type[BaseModel]:
+    """
+    Create a PartyListGenerator model with dynamic party IDs.
+
+    Args:
+        valid_party_ids: List of valid party IDs for the current context.
+
+    Returns:
+        A Pydantic model class with party_id_list constrained to valid IDs.
+    """
+    if not valid_party_ids:
+        raise ValueError("valid_party_ids must not be empty")
+
+    # Create a Literal type from the valid party IDs
+    party_id_literal = Literal[tuple(valid_party_ids)]  # type: ignore[valid-type]
+
+    class DynamicPartyListGenerator(BaseModel):
+        """Output of the Party List Generator."""
+
+        party_id_list: list[party_id_literal] = Field(  # type: ignore[valid-type]
+            description=f"Liste der Partei-IDs von denen der Nutzer eine Antwort haben will. Gültige Werte: {', '.join(valid_party_ids)}"
+        )
+
+    return DynamicPartyListGenerator
 
 
 class RAG(BaseModel):
@@ -22,30 +49,6 @@ class QuickReplyGenerator(BaseModel):
 
     quick_replies: list[str] = Field(
         description="Liste der drei Quick Replies als Strings."
-    )
-
-
-class PartyID(StrEnum):
-    AFD = "afd"
-    BSW = "bsw"
-    CDU = "cdu"
-    FDP = "fdp"
-    FREIE_WAEHLER = "fw"
-    GRUENE = "gruene"
-    LINKE = "linke"
-    PIRATEN = "piraten"
-    SPD = "spd"
-    VOLT = "volt"
-    OEDP = "oedp"
-    TIERSCHUTZPARTEI = "tierschutzpartei"
-    WAHL_CHAT = "wahl-chat"
-
-
-class PartyListGenerator(BaseModel):
-    """Output of the Party List Generator."""
-
-    party_id_list: list[PartyID] = Field(
-        description="Liste der Partei-IDs von denen der Nutzer eine Antwort haben will."
     )
 
 

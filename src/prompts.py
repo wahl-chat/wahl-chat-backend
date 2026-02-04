@@ -1,8 +1,36 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 
+import locale
+from datetime import date
+
 from langchain_core.prompts import (
     PromptTemplate,
 )
+
+from src.models.context import Context
+
+
+def format_date_localized(d: date) -> str:
+    """Format a date using locale-aware formatting.
+
+    Currently only supports German. In the future, this function could accept
+    a language parameter to support other locales.
+
+    Args:
+        d: The date to format
+
+    Returns:
+        Formatted date string (e.g., "23. Februar 2025")
+    """
+    try:
+        locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
+    except locale.Error:
+        try:
+            locale.setlocale(locale.LC_TIME, "German")
+        except locale.Error:
+            pass  # Fall back to current locale
+
+    return d.strftime("%-d. %B %Y")
 
 
 def get_base_guidelines(
@@ -79,7 +107,8 @@ def get_chat_answer_guidelines(party_name: str, is_comparing: bool = False):
 
 
 def get_wahl_chat_answer_guidelines():
-    source_instructions = """    - Beziehe dich für Antworten zu Fragen zur Bundestagswahl, zum Wahlsystem und zu wahl.chat ausschließlich auf die bereitgestellten Hintergrundinformationen.
+    source_instructions = """    - Beziehe dich für Antworten zu Fragen zur ausgewählten Wahl, zu ihrem Ablauf und zu wahl.chat selbst auf die bereitgestellten Hintergrundinformationen und die Kontextinformationen aus deinem Prompt.
+    - Bei Fragen zu dir selbst erwähne den Kontext über die Wahl, zu der du Fragen beantwortest, der dir im Prompt gegeben wurde, um die Informationen aus den bereitgestellten Ausschnitten zu ergänzen.
     - Fokussiere dich auf die relevanten Informationen aus den bereitgestellten Ausschnitten."""
 
     return get_base_guidelines(source_instructions=source_instructions)
@@ -212,7 +241,7 @@ Du schreibst Queries für ein RAG System basierend auf dem bisherigen Konversati
 
 # Hintergrundinformationen
 Die Queries werden zur Suche von relevanten Dokumenten in einem Vector Store verwendet, um die Antwort auf die Nutzerfrage zu verbessern.
-Der Vector Store enthält Dokumente mit Informationen zur Bundestagswahl 2025, zum Wahlsystem und zur Anwendung wahl.chat. wahl.chat ist ein KI-Tool, das es ermöglicht sich interaktiv und zeitgemäß über die Positionen und Pläne der Parteien zu informieren.
+Der Vector Store enthält Dokumente mit Informationen zu {context_name}, zum Wahlsystem und zur Anwendung wahl.chat. wahl.chat ist ein KI-Tool, das es ermöglicht sich interaktiv und zeitgemäß über die Positionen und Pläne der Parteien zu informieren.
 Relevante Informationen werden basierend auf der Ähnlichkeit der Dokumente zu den bereitgestellten Queries gefunden. Deine Query muss daher inhaltlich zu den Dokumenten passen, die du finden möchtest.
 
 # Deine Handlungsanweisungen
@@ -240,7 +269,6 @@ user_prompt_improvement_template = PromptTemplate.from_template(
     user_prompt_improvement_template_str
 )
 
-
 perplexity_system_prompt_str = """
 # Rolle
 Du bist ein neutraler Politikbeobachter, der eine kritische Beurteilung zu der Antwort der Partei {party_name} generiert.
@@ -252,6 +280,14 @@ Langform: {party_long_name}
 Beschreibung: {party_description}
 Parteivorsitzende/r: {party_candidate}
 
+## Kontext
+{context_name}: {context_date_info}
+Ort: {context_location}
+
+## Aktuelle Informationen
+Datum: {date}
+Uhrzeit: {time}
+
 # Aufgabe
 Du erhältst eine Nutzer-Nachricht, und eine Antwort, die ein Chatbot auf Basis von Informationen der Partei {party_name} generiert hat.
 Recherchiere wissenschaftliche und journalistische Analysen zu der Antwort der Partei, nutze sie für eine Beurteilung der Machbarkeit und erläutere den Einfluss der Vorhaben auf einzelne Bürger.
@@ -260,6 +296,7 @@ Verfasse deine Antwort in deutscher Sprache.
 ## Leitlinien für deine Antwort
 1. **Hohe Qualität und Relevanz**
     - Fokussiere dich auf Quellen mit hoher wissenschaftlicher oder journalistischer Qualität.
+    - Fokussiere dich auf Quellen mit Relevanz für den oben genannten Kontext.
     - Verwende KEINE Quellen der Partei {party_name} selbst, um eine kritische externe Perspektive zu gewährleisten.
     - Falls du doch Quellen der Partei {party_name} verwenden musst, erwähne das ausdrücklich in deiner Einordnung.
     - Ziehe bei der Beurteilung der Machbarkeit die finanzielle und gesellschaftliche Realität in Betracht.
@@ -303,6 +340,7 @@ perplexity_user_prompt_str = """
 "{assistant_message}"
 ## Quellen
 Fokussiere dich auf aktuelle wissenschaftliche oder journalistische Quellen, um eine differenzierte Beurteilung der Antwort der Partei zu generieren.
+Verwende KEINE Quellen der Partei {party_name} selbst, um eine kritische externe Perspektive zu gewährleisten.
 ## Antwortlänge
 Fasse dich kurz und knapp.
 
@@ -320,13 +358,16 @@ Du analysierst eine Nachricht eines Nutzers an ein Chatsystem im Kontext des bis
 # Hintergrundinformationen
 Der Nutzer hat bereits folgende Gesprächspartner in den Chat eingeladen:
 {current_party_list}
+
 Es stehen dir zusätzlich folgende Gesprächspartner zur Auswahl:
 {additional_party_list}
 
 # Aufgabe
 Generiere eine Liste der IDs der Gesprächspartner, von denen der Nutzer am wahrscheinlichsten eine Antwort haben möchte.
 
-Wenn der Nutzer keine konkreten Gesprächspartner verlangt, möchte er eine Antwort genau von den Gesprächspartnern, die er in den Chat eingeladen hat.
+Wenn der Nutzer keine konkreten Gesprächspartner verlangt, möchte er eine Antwort genau von den Gesprächspartnern, die er in den Chat eingeladen hat. Dies ist die
+wichtigste Einschränkung. Wenn die originalen Gesprächspartner nicht mit der richtigen ID inkludiert sind, führt dies zu gravierenden Fehlern in der Antwortgenerierung!
+
 Wenn der Nutzer explizit alle Parteien fordert, gib alle Parteien die aktuell im Chat sind und alle großen Parteien an.
 Wähle Kleinparteien nur aus, wenn diese bereits in den Chat eingeladen wurden oder explizit gefordert werden.
 Beachte bei dieser Entscheidung ausschließlich die Parteien in den Hintergrundinformationen und NICHT die Parteien im bisherigen Chatverlauf.
@@ -334,7 +375,6 @@ Allgemeine Fragen zur Wahl, zum Wahlsystem oder zum Chatbot "wahl.chat" (auch "W
 Nutzerfragen, die nach der passenden Partei für eine bestimmte politische Position, nach einer Wahlempfehlung oder Wertung fragen, sollen an "wahl-chat" gerichtet werden.
 Wenn der Nutzer fragt, wer eine bestimmte Position vertritt oder eine Handlung durchführen will, soll die Frage auch an "wahl-chat" gerichtet werden.
 """
-
 
 determine_question_targets_system_prompt = PromptTemplate.from_template(
     determine_question_targets_system_prompt_str
@@ -479,7 +519,6 @@ generate_chat_title_and_quick_replies_user_prompt = PromptTemplate.from_template
     generate_chat_title_and_quick_replies_user_prompt_str
 )
 
-
 generate_wahl_chat_title_and_quick_replies_system_prompt_str = """
 # Rolle
 Du generierst den Titel und Quick Replies für einen Chat in dem die folgenden Parteien vertreten sind:
@@ -500,7 +539,6 @@ Halte dich an die vorgegebene Antwortstruktur im JSON-Format.
 generate_wahl_chat_title_and_quick_replies_system_prompt = PromptTemplate.from_template(
     generate_wahl_chat_title_and_quick_replies_system_prompt_str
 )
-
 
 generate_party_vote_behavior_summary_system_prompt_str = """
 # Rolle
@@ -536,7 +574,6 @@ generate_party_vote_behavior_summary_system_prompt = PromptTemplate.from_templat
     generate_party_vote_behavior_summary_system_prompt_str
 )
 
-
 generate_party_vote_behavior_summary_user_prompt_str = """
 ## Nutzer-Nachricht
 "{user_message}"
@@ -549,7 +586,6 @@ generate_party_vote_behavior_summary_user_prompt_str = """
 generate_party_vote_behavior_summary_user_prompt = PromptTemplate.from_template(
     generate_party_vote_behavior_summary_user_prompt_str
 )
-
 
 system_prompt_improvement_rag_template_vote_behavior_summary_str = """
 # Rolle
@@ -603,15 +639,14 @@ user_prompt_improvement_rag_template_vote_behavior_summary = (
     )
 )
 
-
 wahl_chat_response_system_prompt_template_str = """
 # Rolle
-Du bist der wahl.chat Assistent. Du gibst Bürger:innen Informationen zur Bundestagswahl 2025, zum Wahlsystem und zur Anwendung wahl.chat.
+Du bist der wahl.chat Assistent. Du beantwortest Bürger:innen Fragen zu den Positionen der Parteien zur Wahl, die in deinem aktuellen Kontext unten definiert ist. Außerdem können sie allgemeine Fragen zur Wahl und zur Anwendung von wahl.chat stellen.
 
 # Hintergrundinformationen
-## Hat stattgefunden am Bundestagswahl 2025
-Termin: Hat stattgefunden am 23. Februar 2025
-URL für weitere Informationen zur Wahl: https://www.zdf.de/nachrichten/politik/deutschland/bundestagswahl-termin-kandidaten-umfrage-100.html
+## Aktueller Kontext: {context_name}
+Datum: {context_date_info}
+Standort: {context_location}
 
 ## Parteien, zu denen wahl.chat Fragen beantworten kann
 {all_parties_list}
@@ -625,6 +660,7 @@ Uhrzeit: {time}
 
 # Aufgabe
 Generiere basierend auf den bereitgestellten Hintergrundinformationen und Leitlinien eine Antwort auf die aktuelle Nutzeranfrage. Wenn der Nutzer nach politischen Positionen der Parteien fragt, frage, von welchen Parteien er die Positionen wissen möchte.
+Beziehe dich zusätzlich zu den Dokumentausschnitten auf den aktuellen Kontext und den Standort der Wahl, wenn der Nutzer allgemeine Fragen zur Wahl, ihrem Ablauf oder zu wahl.chat stellt.
 
 {answer_guidelines}
 """
@@ -669,16 +705,16 @@ reranking_user_prompt_template = PromptTemplate.from_template(
 
 swiper_assistant_system_prompt_template_str = """
 # Rolle
-Du bist ein KI-Assistent, der in den wahl.chat Swiper, eine KI-gestützte Wahl-O-Mat Alternative, integriert ist. Du beantwortest Fragen zur Politik in Deutschland und zur vergangenen Bundestagswahl 2025.
+Du bist ein KI-Assistent, der in den wahl.chat Swiper, eine KI-gestützte Wahl-O-Mat Alternative, integriert ist. Du beantwortest Fragen zur Politik in Deutschland.
 
 # Hintergrundinformationen
 ## wahl.chat Swiper
 wahl.chat Swiper ist eine KI-gestützte Alternative zum klassischen Wahl-O-Mat. Nutzer:innen beantworten dabei zu verschiedenen politischen Themen, ob sie den Aussagen zustimmen oder nicht. Am Ende erhalten sie eine Übersicht, welche Partei am besten zu ihren politischen Ansichten passt.
 Zusätzlich können die Nutzer:innen dir Fragen stellen, um eine besser informierte Entscheidung über die Zustimmung oder Ablehnung zu den Fragen im wahl.chat Swiper zu treffen.
 
-## Bundestagswahl 2025
-Termin: Hat stattgefunden am 23. Februar 2025
-URL für weitere Informationen zur Wahl: https://www.zdf.de/nachrichten/politik/deutschland/bundestagswahl-termin-kandidaten-umfrage-100.html
+## Aktueller Kontext: {context_name}
+Datum: {context_date_info}
+Standort: {context_location}
 
 ## Aktuelle Informationen
 Datum: {date}
@@ -716,7 +752,6 @@ swiper_assistant_user_prompt_template = PromptTemplate.from_template(
     swiper_assistant_user_prompt_template_str
 )
 
-
 generate_swiper_assistant_title_and_quick_replies_system_prompt_str = """
 # Rolle
 Du erhältst eine politische Frage und einen Konversationsverlauf und generierst einen Titel für den Chat und Quick Replies für den Nutzer.
@@ -751,3 +786,53 @@ generate_swiper_assistant_title_and_quick_replies_user_prompt_str = """
 
 ## Deine Quick Replies auf Deutsch
 """
+
+
+# =============================================================================
+# Context-aware prompt helpers
+# =============================================================================
+
+
+def build_prompt_context(context: Context) -> dict[str, str]:
+    """Build a dictionary of prompt variables from a Context object.
+
+    This helper function extracts the relevant information from a Context
+    and formats it for use in prompt templates.
+
+    Args:
+        context: The Context object to extract information from
+
+    Returns:
+        A dictionary with the following keys:
+        - context_name: The display name of the context (e.g., "Bundestagswahl 2025")
+        - context_date: Formatted date string or "Kein Datum" if not set
+        - context_date_info: Full date information for prompts
+        - context_type: "election" or "general"
+        - context_id: The context identifier
+        - context_location: The location of the context
+    """
+
+    # Format the date if available
+    if context.date:
+        date_formatted = format_date_localized(context.date)
+
+        # Determine if the date is in the past, today, or future
+        today = date.today()
+        if context.date < today:
+            date_info = f"Hat stattgefunden am {date_formatted}"
+        elif context.date == today:
+            date_info = f"Findet heute statt ({date_formatted})"
+        else:
+            date_info = f"Findet statt am {date_formatted}"
+    else:
+        date_formatted = "Kein Datum"
+        date_info = "Kein spezifisches Datum"
+
+    return {
+        "context_name": context.name,
+        "context_date": date_formatted,
+        "context_date_info": date_info,
+        "context_type": context.type.value,
+        "context_id": context.context_id,
+        "context_location": context.location_name,
+    }

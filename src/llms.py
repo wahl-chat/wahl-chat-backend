@@ -42,13 +42,15 @@ google_gemini_3_flash_preview = ChatGoogleGenerativeAI(
     model="gemini-3-flash-preview",
     api_key=safe_load_api_key("GOOGLE_API_KEY"),
     max_retries=0,
-    temperature=1.0,  # Explicitly set temperature to 1.0 based on Google's recommendation in https://ai.google.dev/gemini-api/docs/gemini-3#temperature
+    temperature=1.0,  # Explicitly set temperature to 1.0 based on Google's recommendation in https://ai.google.dev/gemini-api/docs/gemini-3#temperature,
+    thinking_level="low",  # Set thinking level to low for faster responses
 )
 
 google_gemini_2_5_flash_preview = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash-preview-09-2025",
     api_key=safe_load_api_key("GOOGLE_API_KEY"),
     max_retries=0,
+    thinking_budget=0,  # Disable thinking budget for faster responses
 )
 
 openai_gpt_4o = ChatOpenAI(
@@ -97,7 +99,7 @@ RESPONSE_GENERATION_LLMS: list[LLM] = [
         name="openai-gpt-4o",
         model=openai_gpt_4o,
         sizes=[LLMSize.LARGE],
-        priority=98,
+        priority=60,
         is_at_rate_limit=False,
         premium_only=False,
     ),

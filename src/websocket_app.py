@@ -17,7 +17,7 @@ from src.chatbot_async import (
     generate_chat_summary,
     generate_party_vote_behavior_summary,
 )
-from src.firebase_service import aget_party_by_id
+from src.firebase_service import aget_default_context, aget_party_by_id
 from src.models.chat import GroupChatSession, Message, Role
 from src.models.dtos import (
     ChatResponseCompleteDto,
@@ -112,8 +112,31 @@ async def init_chat_session(sid: str, body: dict):
 
     logger.debug(f"Creating group chat session: {create_session_dto}")
 
+    # Resolve context_id: use provided value or fall back to default context
+    context_id = create_session_dto.context_id
+    if context_id is None:
+        default_context = await aget_default_context()
+        if default_context is None:
+            logger.error(f"No default context found for client {sid}")
+            chat_session_initialized_dto = ChatSessionInitializedDto(
+                session_id=None,
+                status=Status(
+                    indicator=StatusIndicator.ERROR,
+                    message="No default context found. Please provide a context_id.",
+                ),
+            )
+            await sio.emit(
+                "chat_session_initialized",
+                chat_session_initialized_dto.model_dump(),
+                to=sid,
+            )
+            return
+        context_id = default_context.context_id
+        logger.debug(f"No context_id provided, using default: {context_id}")
+
     chat_session = GroupChatSession(
         session_id=create_session_dto.session_id,
+        context_id=context_id,
         chat_history=create_session_dto.chat_history,
         title=create_session_dto.current_title,
         chat_response_llm_size=create_session_dto.chat_response_llm_size,
@@ -180,6 +203,7 @@ async def get_pro_con_perspective(sid: str, body: dict):
     try:
         pro_con_assessment = ProConPerspectiveRequestDto(**body)
         party_id = pro_con_assessment.party_id
+        context_id = pro_con_assessment.context_id
         last_user_message_str = pro_con_assessment.last_user_message
         last_assistant_message_str = pro_con_assessment.last_assistant_message
     except ValidationError as e:
@@ -213,7 +237,9 @@ async def get_pro_con_perspective(sid: str, body: dict):
 
         chat_history = [last_user_message, last_assistant_message]
 
-        pro_con_perspective = await generate_pro_con_perspective(chat_history, party)
+        pro_con_perspective = await generate_pro_con_perspective(
+            chat_history, party, context_id
+        )
 
         logger.debug(f"Emitting pro/con perspective to client {sid}")
 
@@ -642,8 +668,33 @@ async def init_swiper_assistant_session(sid: str, body: dict):
 
     logger.debug(f"Creating wahl-chat-swiper session: {init_chat_session_dto}")
 
+    # Resolve context_id: use provided value or fall back to default context
+    context_id = init_chat_session_dto.context_id
+    if context_id is None:
+        default_context = await aget_default_context()
+        if default_context is None:
+            logger.error(f"No default context found for swiper client {sid}")
+            chat_session_initialized_dto = ChatSessionInitializedDto(
+                session_id=None,
+                status=Status(
+                    indicator=StatusIndicator.ERROR,
+                    message="No default context found. Please provide a context_id.",
+                ),
+            )
+            await sio.emit(
+                "swiper_assistant_session_initialized",
+                chat_session_initialized_dto.model_dump(),
+                to=sid,
+            )
+            return
+        context_id = default_context.context_id
+        logger.debug(
+            f"No context_id provided for swiper session, using default: {context_id}"
+        )
+
     chat_session = GroupChatSession(
         session_id=init_chat_session_dto.session_id,
+        context_id=context_id,
         title=init_chat_session_dto.current_title,
         chat_history=init_chat_session_dto.chat_history,
         chat_response_llm_size=init_chat_session_dto.chat_response_llm_size,

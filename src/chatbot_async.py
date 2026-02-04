@@ -23,7 +23,10 @@ from src.llms import (
     get_structured_output_from_llms,
     stream_answer_from_llms,
 )
-from src.models.party import WAHL_CHAT_PARTY, Party
+from src.firebase_service import aget_context_by_id
+from src.models.context import DEFAULT_CONTEXT_ID
+from src.models.context import ContextParty
+from src.models.party import WAHL_CHAT_PARTY
 from src.models.vote import Vote, VotingResultsByParty
 from src.utils import (
     build_document_string_for_context,
@@ -32,6 +35,7 @@ from src.utils import (
     load_env,
 )
 from src.prompts import (
+    build_prompt_context,
     get_chat_answer_guidelines,
     get_wahl_chat_answer_guidelines,
     get_swiper_answer_guidelines,
@@ -69,17 +73,16 @@ from src.prompts import (
 
 from src.models.chat import Message
 from src.models.structured_outputs import (
-    PartyListGenerator,
     ChatSummaryGenerator,
     GroupChatTitleQuickReplyGenerator,
     QuestionTypeClassifier,
     RerankingOutput,
+    create_party_list_generator,
 )
 
 load_env()
 
 logger = logging.getLogger(__name__)
-
 
 chat_response_llms: list[LLM] = RESPONSE_GENERATION_LLMS
 
@@ -146,8 +149,8 @@ async def rerank_documents(
 async def get_question_targets_and_type(
     user_message: str,
     previous_chat_history: str,
-    all_available_parties: List[Party],
-    currently_selected_parties: List[Party],
+    all_available_parties: List[ContextParty],
+    currently_selected_parties: List[ContextParty],
 ) -> Tuple[List[str], str, bool]:
     if len(currently_selected_parties) == 0:
         currently_selected_parties = [WAHL_CHAT_PARTY]
@@ -190,13 +193,18 @@ async def get_question_targets_and_type(
         previous_chat_history=previous_chat_history,
         user_message=user_message_for_target_selection,
     )
+
     messages = [
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt),
     ]
 
+    # Create dynamic PartyListGenerator with valid party IDs from context
+    valid_party_ids = [party.party_id for party in all_available_parties]
+    party_list_generator = create_party_list_generator(valid_party_ids)
+
     response_targets = await get_structured_output_from_llms(
-        generate_party_list_llms, messages, PartyListGenerator
+        generate_party_list_llms, messages, party_list_generator
     )
 
     party_id_list = getattr(response_targets, "party_id_list", [])
@@ -248,10 +256,18 @@ async def get_question_targets_and_type(
 
 
 async def generate_improvement_rag_query(
-    party: Party, conversation_history: str, last_user_message: str
+    party: ContextParty,
+    conversation_history: str,
+    last_user_message: str,
+    context_id: str = DEFAULT_CONTEXT_ID,
 ) -> str:
     if party.party_id == WAHL_CHAT_PARTY.party_id:
-        system_prompt = system_prompt_improve_general_chat_rag_query_template.format()
+        # Fetch context to get the context name for the template
+        context = await aget_context_by_id(context_id)
+        context_name = context.name if context else "Bundestagswahl 2025"
+        system_prompt = system_prompt_improve_general_chat_rag_query_template.format(
+            context_name=context_name
+        )
     else:
         system_prompt = system_prompt_improvement_template.format(party_name=party.name)
     user_prompt = user_prompt_improvement_template.format(
@@ -275,7 +291,7 @@ async def generate_improvement_rag_query(
 
 
 async def generate_pro_con_perspective(
-    chat_history: List[Message], party: Party
+    chat_history: List[Message], party: ContextParty, context_id: str | None = None
 ) -> Message:
     # from a list of Message elements, extract the last assistant and user message by checking the role
     last_assistant_message = next(
@@ -285,11 +301,28 @@ async def generate_pro_con_perspective(
         (message for message in chat_history[::-1] if message.role == "user"), None
     )
 
+    # Get context information
+    context = None
+    if context_id:
+        context = await aget_context_by_id(context_id)
+    if context is None:
+        context = await aget_context_by_id(DEFAULT_CONTEXT_ID)
+
+    prompt_context = build_prompt_context(context) if context else {}
+    now = datetime.now()
+
     system_prompt = perplexity_system_prompt.format(
         party_name=party.name,
         party_long_name=party.long_name,
         party_description=party.description,
         party_candidate=party.candidate,
+        context_name=prompt_context.get("context_name", "Bundestagswahl 2025"),
+        context_date_info=prompt_context.get(
+            "context_date_info", "Kein spezifisches Datum"
+        ),
+        context_location=prompt_context.get("context_location", "Deutschland"),
+        date=now.strftime("%Y-%m-%d"),
+        time=now.strftime("%H:%M"),
     )
     user_prompt = perplexity_user_prompt.format(
         assistant_message=last_assistant_message.content
@@ -359,7 +392,7 @@ def get_rag_context(relevant_docs: List[Document]) -> str:
 
 
 def get_rag_comparison_context(
-    relevant_docs: Dict[str, List[Document]], relevant_parties: List[Party]
+    relevant_docs: Dict[str, List[Document]], relevant_parties: List[ContextParty]
 ) -> str:
     rag_context = ""
     doc_num = 0
@@ -383,7 +416,7 @@ def get_rag_comparison_context(
 
 
 async def get_improved_rag_query_voting_behavior(
-    party: Party, last_user_message: str, last_assistant_message: str
+    party: ContextParty, last_user_message: str, last_assistant_message: str
 ) -> str:
     system_prompt = system_prompt_improvement_rag_template_vote_behavior_summary.format(
         party_name=party.name
@@ -405,12 +438,13 @@ async def get_improved_rag_query_voting_behavior(
 
 
 async def generate_streaming_chatbot_response(
-    party: Party,
+    party: ContextParty,
     conversation_history: str,
     user_message: str,
     relevant_docs: List[Document],
-    all_parties: list[Party],
+    all_parties: list[ContextParty],
     chat_response_llm_size: LLMSize,
+    context_id: str = DEFAULT_CONTEXT_ID,
     use_premium_llms: bool = False,
 ) -> AsyncIterator[BaseMessageChunk]:
     rag_context = get_rag_context(relevant_docs)
@@ -418,6 +452,10 @@ async def generate_streaming_chatbot_response(
     now = datetime.now()
 
     if party.party_id == WAHL_CHAT_PARTY.party_id:
+        # Fetch context to get the context fields for the template
+        context = await aget_context_by_id(context_id)
+        prompt_context = build_prompt_context(context) if context else {}
+
         answer_guidelines = get_wahl_chat_answer_guidelines()
         all_parties_list = ""
         for p in all_parties:
@@ -428,6 +466,11 @@ async def generate_streaming_chatbot_response(
                 f"Spitzenkandidat*In für die Bundestagswahl 2025: {p.candidate}\n"
             )
         system_prompt = wahl_chat_response_system_prompt_template.format(
+            context_name=prompt_context.get("context_name", "Bundestagswahl 2025"),
+            context_date_info=prompt_context.get(
+                "context_date_info", "Kein spezifisches Datum"
+            ),
+            context_location=prompt_context.get("context_location", "Deutschland"),
             all_parties_list=all_parties_list,
             date=now.strftime("%Y-%m-%d"),
             time=now.strftime("%H:%M"),
@@ -467,11 +510,11 @@ async def generate_streaming_chatbot_response(
 
 
 async def generate_streaming_chatbot_comparing_response(
-    party: Party,
+    party: ContextParty,
     conversation_history: str,
     user_message: str,
     relevant_docs: Dict[str, List[Document]],
-    relevant_parties: List[Party],
+    relevant_parties: List[ContextParty],
     chat_response_llm_size: LLMSize,
     use_premium_llms: bool = False,
 ) -> AsyncIterator[BaseMessageChunk]:
@@ -517,7 +560,7 @@ async def generate_streaming_chatbot_comparing_response(
 async def generate_chat_title_and_chick_replies(
     chat_history_str: str,
     chat_title: str,
-    parties_in_chat: List[Party],
+    parties_in_chat: List[ContextParty],
     wahl_chat_assistant_last_responded: bool = False,
     is_comparing: bool = False,
 ) -> GroupChatTitleQuickReplyGenerator:
@@ -565,7 +608,7 @@ async def generate_chat_title_and_chick_replies(
 
 
 async def generate_party_vote_behavior_summary(
-    party: Party,
+    party: ContextParty,
     last_user_message: str,
     last_assistant_message: str,
     votes: List[Vote],
