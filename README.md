@@ -165,18 +165,21 @@ Firebase CLI: `npm install -g firebase-tools` & `firebase login`
 1. Export the proposed_questions collection from dev: `firestore-export --accountCredentials ../wahl-chat-dev-firebase-adminsdk.json --backupFile firestore_data/proposed_questions.json --nodePath proposed_questions -p`
 2. Import the proposed_questions collection to prod: `firestore-import --accountCredentials ../wahl-chat-firebase-adminsdk.json --backupFile firestore_data/proposed_questions.json --nodePath proposed_questions`
 
-### Seeding Contexts and Parties
+### Seeding Contexts, Parties, and Proposed Questions
 
-The application supports multiple election contexts (e.g., Bundestagswahl 2025, Landtagswahl Baden-Württemberg 2026). Each context has its own set of parties stored as a sub-collection.
+The application supports multiple election contexts (e.g., Bundestagswahl 2025, Landtagswahl Baden-Württemberg 2026). Each context has its own set of parties and proposed questions stored as sub-collections.
 
 #### Data Structure
 
 ```
 firebase/firestore_data/dev/
-├── contexts.json                                    # All contexts
-├── parties_bundestagswahl-2025.json                 # Parties for BTW 2025
-├── parties_landtagswahl-baden-wuerttemberg-2026.json # Parties for LTW BW 2026
-└── parties_kommunalwahl-muenchen-2026.json          # Parties for KW München 2026
+├── contexts.json                                         # All contexts
+├── parties_bundestagswahl-2025.json                      # Parties for BTW 2025
+├── parties_landtagswahl-baden-wuerttemberg-2026.json     # Parties for LTW BW 2026
+├── parties_kommunalwahl-muenchen-2026.json               # Parties for KW München 2026
+├── proposed_questions_bundestagswahl-2025.json           # Proposed questions for BTW 2025
+├── proposed_questions_landtagswahl-baden-wuerttemberg-2026.json
+└── proposed_questions_kommunalwahl-muenchen-2026.json
 ```
 
 #### Firestore Structure
@@ -184,8 +187,10 @@ firebase/firestore_data/dev/
 ```
 contexts/{context_id}
 ├── context_id, name, type, date, ...
-└── parties/{party_id}
-    └── party_id, name, long_name, manifesto_url, candidate, ...
+├── parties/{party_id}
+│   └── party_id, name, long_name, manifesto_url, candidate, ...
+└── proposed_questions/{party_id}/questions/{question_id}
+    └── content, ...
 ```
 
 #### Seeding with the Python Script (Recommended)
@@ -198,7 +203,8 @@ python scripts/seed_firestore.py
 
 This script:
 1. Reads `contexts.json` and imports all contexts
-2. Finds all `parties_*.json` files and imports them into the corresponding `contexts/{context_id}/parties` sub-collections
+2. Finds all `parties_{context_id}.json` files and imports them into `contexts/{context_id}/parties`
+3. Finds all `proposed_questions_{context_id}.json` files and imports them into `contexts/{context_id}/proposed_questions/{party_id}/questions`
 
 For production:
 ```bash
@@ -219,4 +225,57 @@ firestore-import -a wahl-chat-dev-firebase-adminsdk.json -n contexts/bundestagsw
 
 1. Add the context to `firebase/firestore_data/dev/contexts.json`
 2. Create `firebase/firestore_data/dev/parties_{context_id}.json` with the parties
-3. Run `python scripts/seed_firestore.py`
+3. Create `firebase/firestore_data/dev/proposed_questions_{context_id}.json` with the proposed questions
+4. Run `python scripts/seed_firestore.py`
+
+### Moving a Context from Dev to Prod
+
+When you've finished setting up and testing a context in dev, follow these steps to deploy it to production:
+
+#### 1. Prepare the Data Files
+
+Copy the dev data files to prod and update URLs:
+
+```bash
+cd firebase/firestore_data
+
+# Copy contexts (merge with existing prod contexts if needed)
+cp dev/contexts.json prod/contexts.json
+
+# Copy parties for the specific context
+cp dev/parties_{context_id}.json prod/parties_{context_id}.json
+
+# Copy proposed questions for the specific context
+cp dev/proposed_questions_{context_id}.json prod/proposed_questions_{context_id}.json
+```
+
+#### 2. Update Firebase Storage URLs
+
+**IMPORTANT**: Replace dev storage URLs with prod URLs in all copied files:
+
+- Find: `https://storage.googleapis.com/wahl-chat-dev.firebasestorage.app`
+- Replace with: `https://storage.googleapis.com/wahl-chat.firebasestorage.app`
+
+This applies to party logos, manifesto PDFs, and any other assets stored in Firebase Storage.
+
+#### 3. Upload Assets to Prod Storage
+
+Ensure all referenced assets (logos, PDFs, etc.) exist in the prod Firebase Storage bucket under the same paths as in dev.
+
+#### 4. Seed Production Firestore
+
+```bash
+ENV=prod python scripts/seed_firestore.py
+```
+
+#### 5. Deploy Qdrant Vector Store Data
+
+The vector store collections are context-specific. Make sure to populate the prod vector store collection for the new context:
+- Dev collection: `context_{context_id}_party_docs_dev`
+- Prod collection: `context_{context_id}_party_docs` (no suffix)
+
+#### 6. Verify the Deployment
+
+1. Check the Firebase Console to confirm data was imported correctly
+2. Test the context in the production application
+3. Verify party responses and proposed questions work as expected
