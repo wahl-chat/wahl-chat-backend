@@ -291,7 +291,7 @@ async def generate_improvement_rag_query(
 
 
 async def generate_pro_con_perspective(
-    chat_history: List[Message], party: ContextParty
+    chat_history: List[Message], party: ContextParty, context_id: str | None = None
 ) -> Message:
     # from a list of Message elements, extract the last assistant and user message by checking the role
     last_assistant_message = next(
@@ -301,11 +301,28 @@ async def generate_pro_con_perspective(
         (message for message in chat_history[::-1] if message.role == "user"), None
     )
 
+    # Get context information
+    context = None
+    if context_id:
+        context = await aget_context_by_id(context_id)
+    if context is None:
+        context = await aget_context_by_id(DEFAULT_CONTEXT_ID)
+
+    prompt_context = build_prompt_context(context) if context else {}
+    now = datetime.now()
+
     system_prompt = perplexity_system_prompt.format(
         party_name=party.name,
         party_long_name=party.long_name,
         party_description=party.description,
         party_candidate=party.candidate,
+        context_name=prompt_context.get("context_name", "Bundestagswahl 2025"),
+        context_date_info=prompt_context.get(
+            "context_date_info", "Kein spezifisches Datum"
+        ),
+        context_location=prompt_context.get("context_location", "Deutschland"),
+        date=now.strftime("%Y-%m-%d"),
+        time=now.strftime("%H:%M"),
     )
     user_prompt = perplexity_user_prompt.format(
         assistant_message=last_assistant_message.content

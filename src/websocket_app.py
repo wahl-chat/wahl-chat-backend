@@ -203,6 +203,7 @@ async def get_pro_con_perspective(sid: str, body: dict):
     try:
         pro_con_assessment = ProConPerspectiveRequestDto(**body)
         party_id = pro_con_assessment.party_id
+        context_id = pro_con_assessment.context_id
         last_user_message_str = pro_con_assessment.last_user_message
         last_assistant_message_str = pro_con_assessment.last_assistant_message
     except ValidationError as e:
@@ -236,7 +237,9 @@ async def get_pro_con_perspective(sid: str, body: dict):
 
         chat_history = [last_user_message, last_assistant_message]
 
-        pro_con_perspective = await generate_pro_con_perspective(chat_history, party)
+        pro_con_perspective = await generate_pro_con_perspective(
+            chat_history, party, context_id
+        )
 
         logger.debug(f"Emitting pro/con perspective to client {sid}")
 
